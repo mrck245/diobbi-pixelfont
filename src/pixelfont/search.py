@@ -6,7 +6,7 @@ import os
 import time
 
 from .core import detect_zones, extract_outlines, pixelize
-from .evaluate import collisions, ocr_score, topo_failures
+from .evaluate import collisions, ocr_score, pieces_ratio, topo_failures
 from .prep import load_source
 from .render import font_bytes, shape
 
@@ -21,7 +21,7 @@ def shaped_glyphs(src, lines):
     return used
 
 
-def find_min_size(cfg, outdir, log=print, ocr_ratio=0.9):
+def find_min_size(cfg, outdir, log=print, ocr_ratio=0.9, pieces_min=0.95):
     t0 = time.time()
     lines = cfg["lines"]
     src = load_source(cfg["font"], cfg["script"], cfg.get("font_number", 0), "".join(lines))
@@ -50,13 +50,14 @@ def find_min_size(cfg, outdir, log=print, ocr_ratio=0.9):
         col = collisions(r.bitmaps, cmap_names)
         topo = topo_failures(r.bitmaps, cmap_names)
         score = ocr_score(data, ocr_lines, cfg["ocr"], size, True)
-        ok = not col and score >= ocr_ratio * base
+        pr, got, ref = pieces_ratio(data, sdata, lines, size)
+        ok = not col and score >= ocr_ratio * base and pieces_min <= pr <= 2 - pieces_min
         res = dict(size=size, collisions=len(col), collision_examples=col[:6],
                    topo_fail=len(topo), topo_total=len(cmap_names), ocr=round(score, 3),
-                   ocr_base=round(base, 3), ok=ok, threshold=round(r.threshold, 3))
+                   ocr_base=round(base, 3), pieces=f"{got}/{ref}", ok=ok, threshold=round(r.threshold, 3))
         results.append(res)
         log(f"[{cfg['id']}] {size}px colisiones={len(col)} topología={len(topo)}/{len(cmap_names)} "
-            f"OCR={score:.2f} {'OK' if ok else 'falla'} ({time.time() - t0:.0f}s)")
+            f"OCR={score:.2f} piezas={got}/{ref} {'OK' if ok else 'falla'} ({time.time() - t0:.0f}s)")
         # mínimo = primer tamaño que pasa y cuyo siguiente también pasa
         if ok and len(results) >= 2 and results[-2]["ok"]:
             best = results[-2]["size"]

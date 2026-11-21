@@ -2,16 +2,17 @@
  "id": "japones",
  "name": "Japonés · Noto Sans CJK JP",
  "font": "NotoSansCJK-Regular.ttc",
- "min_size": 13,
+ "min_size": 14,
  "results": [
   {
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2601,
+   "topo_fail": 2486,
    "topo_total": 3354,
-   "ocr": 0.765,
+   "ocr": 0.736,
    "ocr_base": 1.0,
+   "pieces": "77/78",
    "ok": false,
    "threshold": 0.484
   },
@@ -19,10 +20,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2526,
+   "topo_fail": 2422,
    "topo_total": 3354,
-   "ocr": 0.694,
+   "ocr": 0.768,
    "ocr_base": 1.0,
+   "pieces": "70/78",
    "ok": false,
    "threshold": 0.492
   },
@@ -30,10 +32,11 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2504,
+   "topo_fail": 2402,
    "topo_total": 3354,
-   "ocr": 0.78,
+   "ocr": 0.739,
    "ocr_base": 1.0,
+   "pieces": "74/78",
    "ok": false,
    "threshold": 0.5
   },
@@ -41,10 +44,11 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2433,
+   "topo_fail": 2334,
    "topo_total": 3354,
-   "ocr": 0.88,
+   "ocr": 0.899,
    "ocr_base": 1.0,
+   "pieces": "71/78",
    "ok": false,
    "threshold": 0.5
   },
@@ -52,10 +56,11 @@
    "size": 12,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2314,
+   "topo_fail": 2198,
    "topo_total": 3354,
-   "ocr": 0.876,
+   "ocr": 0.929,
    "ocr_base": 1.0,
+   "pieces": "74/78",
    "ok": false,
    "threshold": 0.5
   },
@@ -63,27 +68,41 @@
    "size": 13,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2201,
+   "topo_fail": 2117,
    "topo_total": 3354,
-   "ocr": 0.921,
+   "ocr": 0.97,
    "ocr_base": 1.0,
-   "ok": true,
+   "pieces": "74/78",
+   "ok": false,
    "threshold": 0.5
   },
   {
    "size": 14,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2156,
+   "topo_fail": 2097,
    "topo_total": 3354,
-   "ocr": 0.951,
+   "ocr": 1.0,
    "ocr_base": 1.0,
+   "pieces": "75/78",
+   "ok": true,
+   "threshold": 0.5
+  },
+  {
+   "size": 15,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 1979,
+   "topo_total": 3354,
+   "ocr": 0.981,
+   "ocr_base": 1.0,
+   "pieces": "76/78",
    "ok": true,
    "threshold": 0.5
   }
  ],
  "files": {
-  "13": "salida/japones-13px.ttf"
+  "14": "salida/japones-14px.ttf"
  },
  "zones": [
   -80.0,
@@ -92,5 +111,5 @@
   733.0,
   840.0
  ],
- "seconds": 411
+ "seconds": 588
 }

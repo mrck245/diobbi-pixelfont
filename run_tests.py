@@ -19,7 +19,7 @@ CONFIGS = [
          lines=["„Bună ziua!” — spuse învățătoarea.", "Știți că în țară, la Brașov, plouă?",
                 "Mâine vom învăța împreună: ă, â, î, ș, ț."]),
     dict(id="rumano-display", name="Rumano · Anton (condensada gruesa)", font="fonts_src/Anton-Regular.ttf",
-         script="latin", ocr="ron", sizes=list(range(6, 17)),
+         script="latin", ocr="ron", sizes=list(range(6, 21)),
          lines=["„Bună ziua!” — spuse învățătoarea.", "Știți că în țară, la Brașov, plouă?",
                 "Mâine vom învăța împreună: ă, â, î, ș, ț."]),
     dict(id="japones", name="Japonés · Noto Sans CJK JP", font=CJK,

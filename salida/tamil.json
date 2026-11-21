@@ -8,10 +8,11 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 58,
+   "topo_fail": 56,
    "topo_total": 120,
-   "ocr": 0.785,
+   "ocr": 0.748,
    "ocr_base": 0.929,
+   "pieces": "84/79",
    "ok": false,
    "threshold": 0.488
   },
@@ -19,10 +20,11 @@
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 55,
+   "topo_fail": 54,
    "topo_total": 120,
-   "ocr": 0.706,
+   "ocr": 0.663,
    "ocr_base": 0.929,
+   "pieces": "90/79",
    "ok": false,
    "threshold": 0.488
   },
@@ -30,10 +32,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 47,
+   "topo_fail": 45,
    "topo_total": 120,
    "ocr": 0.886,
    "ocr_base": 0.929,
+   "pieces": "81/79",
    "ok": true,
    "threshold": 0.504
   },
@@ -41,10 +44,11 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 31,
+   "topo_fail": 29,
    "topo_total": 120,
-   "ocr": 0.852,
+   "ocr": 0.868,
    "ocr_base": 0.929,
+   "pieces": "82/79",
    "ok": true,
    "threshold": 0.5
   }
@@ -58,5 +62,5 @@
   550.0,
   714.0
  ],
- "seconds": 10
+ "seconds": 12
 }

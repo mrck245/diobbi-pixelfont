@@ -77,3 +77,45 @@ def ocr_score(font_data, lines, lang, px, mono, target_em=48):
             img = upscale(img, f).filter(ImageFilter.GaussianBlur(f * 0.35))
         scores.append(similarity(ocr(img, lang), line))
     return float(np.mean(scores))
+
+
+def line_pieces(font_data, line, px, mono, ref_px=None, dot_triangles=True):
+    """Cuenta las piezas separadas (componentes conexos) de una línea
+    renderizada. En una fuente pixel, puntos o acentos pegados al cuerpo
+    reducen el número de piezas frente al original."""
+    from scipy import ndimage
+    img = np.array(render_line(font_data, line, px, mono)) < 128
+    lab, n = ndimage.label(img, structure=np.ones((3, 3), bool))
+    if n == 0:
+        return 0
+    if mono and dot_triangles:
+        # grupos de puntos que solo se tocan en diagonal (p. ej. el triángulo
+        # de ث) cuentan como puntos separados
+        extra = 0
+        for k in range(1, n + 1):
+            part = lab == k
+            sub, m = ndimage.label(part)
+            ys, xs = np.nonzero(part)
+            shape = (ys.max() - ys.min() + 1, xs.max() - xs.min() + 1)
+            # triángulo de 3 puntos de 1 px (.#. / #.#), forma estándar en pixel art
+            if m == 3 and part.sum() == 3 and shape in ((2, 3), (3, 2)):
+                extra += 2
+        return n + extra
+    if ref_px:  # original grande: ignorar motas menores que ~0.3 px del tamaño destino
+        areas = ndimage.sum(img, lab, index=np.arange(1, n + 1))
+        min_area = 0.3 * (px / ref_px) ** 2
+        return int((areas >= min_area).sum())
+    return n
+
+
+def pieces_ratio(pixel_data, src_data, lines, size, ref_px=64):
+    """Un triángulo de 3 píxeles puede ser tres puntos (ث) o una breve (ă):
+    por línea se usa la lectura que coincide mejor con el original."""
+    got = ref = 0
+    for ln in lines:
+        r = line_pieces(src_data, ln, ref_px, False, ref_px=size)
+        a = line_pieces(pixel_data, ln, size, True, dot_triangles=True)
+        b = line_pieces(pixel_data, ln, size, True, dot_triangles=False)
+        got += a if abs(a - r) <= abs(b - r) else b
+        ref += r
+    return got / ref if ref else 1.0, got, ref

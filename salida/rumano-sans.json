@@ -8,10 +8,11 @@
    "size": 5,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 139,
+   "topo_fail": 109,
    "topo_total": 350,
-   "ocr": 0.177,
+   "ocr": 0.426,
    "ocr_base": 0.967,
+   "pieces": "118/113",
    "ok": false,
    "threshold": 0.438
   },
@@ -20,14 +21,15 @@
    "collisions": 1,
    "collision_examples": [
     [
-     "Oacute",
-     "Ocircumflex"
+     "ecaron",
+     "ecircumflex"
     ]
    ],
-   "topo_fail": 117,
+   "topo_fail": 88,
    "topo_total": 350,
-   "ocr": 0.415,
+   "ocr": 0.514,
    "ocr_base": 0.967,
+   "pieces": "119/125",
    "ok": false,
    "threshold": 0.438
   },
@@ -35,10 +37,11 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 91,
+   "topo_fail": 48,
    "topo_total": 350,
-   "ocr": 0.645,
+   "ocr": 0.723,
    "ocr_base": 0.967,
+   "pieces": "124/125",
    "ok": false,
    "threshold": 0.438
   },
@@ -46,10 +49,11 @@
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 49,
+   "topo_fail": 35,
    "topo_total": 350,
-   "ocr": 0.683,
+   "ocr": 0.749,
    "ocr_base": 0.967,
+   "pieces": "120/125",
    "ok": false,
    "threshold": 0.457
   },
@@ -57,10 +61,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 87,
+   "topo_fail": 38,
    "topo_total": 350,
-   "ocr": 0.755,
+   "ocr": 0.829,
    "ocr_base": 0.967,
+   "pieces": "122/125",
    "ok": false,
    "threshold": 0.5
   },
@@ -68,10 +73,11 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 32,
+   "topo_fail": 23,
    "topo_total": 350,
-   "ocr": 0.923,
+   "ocr": 0.913,
    "ocr_base": 0.967,
+   "pieces": "126/125",
    "ok": true,
    "threshold": 0.508
   },
@@ -79,10 +85,11 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 30,
+   "topo_fail": 23,
    "topo_total": 350,
    "ocr": 0.936,
    "ocr_base": 0.967,
+   "pieces": "125/125",
    "ok": true,
    "threshold": 0.492
   }
@@ -96,5 +103,5 @@
   710.0,
   940.0
  ],
- "seconds": 14
+ "seconds": 20
 }
