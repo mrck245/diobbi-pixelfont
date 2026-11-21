@@ -17,11 +17,11 @@ batería de pruebas.
 | Idioma · fuente | Mínimo (px/em) | Altura de línea | Tinta mediana por glifo | OCR pixel / original | Piezas en texto |
 |---|---|---|---|---|---|
 | Rumano · Noto Sans | **10** | 14 px | 7 px | 0.91 / 0.97 | 126/125 |
-| Rumano · Crimson Text (serif) | **11** | 15 px | 7 px | 0.86 / 0.93 | 124/125 |
-| Rumano · Anton (condensada gruesa) | **14** | 22 px | 13 px | 0.91 / 0.94 | 120/125 |
+| Rumano · Crimson Text (serif) | **11** | 15 px | 7 px | 0.87 / 0.93 | 122/125 |
+| Rumano · Anton (condensada gruesa) | **14** | 22 px | 13 px | 0.87 / 0.94 | 124/125 |
 | Japonés · Noto Sans CJK JP | **14** | 22 px | 13 px | 1.00 / 1.00 | 75/78 |
 | Tamil · Noto Sans Tamil | **9** | 12 px | 6 px | 0.89 / 0.93 | 81/79 |
-| Urdu · Noto Naskh Arabic | **11** | 19 px | 7 px | 0.98 / 1.00 | 68/69 |
+| Urdu · Noto Naskh Arabic | **10** | 18 px | 7 px | 0.94 / 1.00 | 72/69 |
 | Urdu · Noto Nastaliq Urdu | **18** | 46 px | 12 px | 0.76 / 0.83 | 59/61 |
 | Dzongkha · Jomolhari | **18** | 29 px | 10 px | 1.00 / 1.00 | 45/45 |
 
@@ -47,21 +47,34 @@ cada tamaño probado en `salida/*.json`.
 6. **Reparación topológica** contra la versión en alta resolución: recupera piezas perdidas
    (puntos, diacríticos), reconecta trazos partidos por el camino de mayor cobertura, reabre
    contraformas tapadas, separa piezas fusionadas, endereza bultos y elimina píxeles huérfanos.
-7. **Puntos y diacríticos**: las piezas pequeñas que quedaron pegadas dentro de un glifo se
-   recolocan con al menos 1 px de separación del cuerpo. Los puntos de un mismo grupo pueden
-   tocarse en diagonal, como el triángulo `.#.` / `#.#` de ث/ش/پ, que es la forma habitual en
-   pixel art. En las marcas que GPOS coloca aparte (los puntos de Noto Naskh son glifos
-   independientes):
-   - se igualan los anclajes de cada grupo de marcas, corrigiendo solo diferencias de redondeo
-     de 1 px, para que el punto simple, el doble y el triple queden a la misma altura;
-   - para cada letra base se busca el desplazamiento que deja **exactamente 1 px de aire** entre
-     la letra y sus puntos, ni pegados ni flotando. Cada marca pesa según cuántas letras la ponen
-     sobre esa base, así las vocales opcionales o los puntos raros no desplazan a los comunes.
-8. **Espaciado**: si en el original una letra deja aire a su derecha, la versión pixel deja al
+7. **Simetría** (antes de dibujar): si una letra es simétrica en el original (A, H, O, V, Y, ٮ, 口…),
+   se prueban alineaciones de ¼ de píxel antes de rasterizarla y se elige la que sale simétrica
+   sin engrosar el trazo. Una «Y» de ancho impar conserva su tronco de 1 px. Lo que no es simétrico
+   en el original (comas, la coma de la ș, letras inclinadas) no se toca. Las letras que se unen
+   a sus vecinas (árabe) no se desplazan, para no romper las uniones.
+8. **Puntos y diacríticos**:
+   - Las piezas pequeñas pegadas dentro de un glifo se recolocan con 1 px de separación. Los puntos
+     de un mismo grupo pueden tocarse en diagonal, como el triángulo `.#.` / `#.#` de ث/ش/پ.
+   - Si un acento está centrado sobre su letra en el original, se centra exactamente en píxeles.
+     Si es simétrico, también se completa su simetría, solo agregando píxeles.
+   - En las marcas que GPOS coloca aparte (los puntos de Noto Naskh son glifos independientes):
+     se igualan los anclajes de cada grupo (punto simple, doble, triple) en vertical y en
+     horizontal, comparando solo marcas del mismo ancho par/impar. Después, por cada letra base,
+     primero se centra la marca que en el original va centrada, y luego se busca la altura (y, si
+     no va centrada, un corrimiento de 1 px a los lados).
+   - **Altura**: se mide el aire vertical contra el trazo que la marca tiene justo debajo o
+     encima, en sus mismas columnas, no contra el píxel más cercano. El objetivo sale del
+     original: si la marca está cerca del trazo (< 0.3 em), la distancia se compacta a la mitad,
+     con mínimo 1 px, como se hace en pixel art. Si está lejos por diseño (el punto alto de «ن»,
+     las marcas apiladas del Nastaliq), se respeta.
+   - Cada marca pesa según cuántas letras la ponen sobre esa base, incluidas las variantes
+     contextuales (inicial, media, final). Para eso se da forma a cada letra sola y junto a
+     letras vecinas de muestra.
+9. **Espaciado**: si en el original una letra deja aire a su derecha, la versión pixel deja al
    menos 1 px. En los lados que se unen, como en el árabe, no se agrega.
-9. **Desambiguación**: si dos glifos distintos quedan idénticos, cambia el píxel donde más difieren
+10. **Desambiguación**: si dos glifos distintos quedan idénticos, cambia el píxel donde más difieren
    los originales.
-10. **Reconstrucción**: `upem = N × 64` (1 px = 64 unidades). Los glifos se escriben como
+11. **Reconstrucción**: `upem = N × 64` (1 px = 64 unidades). Los glifos se escriben como
    rectángulos y GPOS/GDEF, avances y métricas se redondean a la rejilla. Las tablas de hinting se
    eliminan.
 
@@ -77,7 +90,9 @@ cada tamaño probado en `salida/*.json`.
 - **Piezas en texto**: cuenta las piezas separadas (letras, puntos, acentos) de las líneas de
   prueba renderizadas y las compara con el original. Detecta puntos pegados al cuerpo o letras
   pegadas entre sí, cosas que el OCR suele pasar por alto porque adivina por contexto. Se exige
-  ≥ 95 %.
+  entre 95 % y 105 %. Las piezas de más también cuentan como fallo, porque son uniones rotas. Un
+  triángulo de 3 píxeles puede ser tres puntos (ث) o una breve (ă), así que se usa la lectura
+  que coincide con el original.
 - **Tamaño mínimo** = el primer tamaño que pasa (unicidad, OCR ≥ 90 % del original y piezas) y cuyo
   siguiente también pasa. Esto evita aciertos aislados.
 
@@ -104,10 +119,11 @@ Agregar una escritura nueva consiste en añadir sus rangos Unicode. El resto del
   marcas curvas y una forma de coma para la coma inferior. Además, la prueba de unicidad debería
   exigir una distancia de al menos 2 píxeles entre letras acentuadas, no solo que no sean
   idénticas.
-- **Árabe/urdu**: los puntos quedan a 1 px de la letra (en el original, 0.7–1.4 px), pero
-  todavía hay letras vecinas que se tocan en algunas uniones. Las formas contextuales que solo
-  aparecen dentro de palabras, como la «ہ» antes de «ے» en Nastaliq, no reciben el ajuste de
-  marcas porque la prueba de uso solo da forma a letras sueltas.
+- **Árabe/urdu**: los puntos quedan centrados y cerca del trazo, pero todavía hay letras vecinas
+  que se tocan en algunas uniones. El centrado usa el centro de la letra completa; en letras como
+  «ق», donde los puntos van sobre la cabeza y no sobre el centro, queda pendiente usar un eje
+  local.
+- **Acentos en mayúsculas latinas a 10–11 px** (Â, Ă, Î): falta altura para dibujarlos bien.
 - **Dzongkha y japonés**: con la prueba de piezas más estricta, el mínimo es 18 px y 14 px. En
   dzongkha algunos signos vocálicos tocan letras vecinas a tamaños menores.
 - **Topología en CJK**: en kanji densos muchas contraformas pequeñas se fusionan. El OCR sigue

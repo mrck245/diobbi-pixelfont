@@ -227,11 +227,12 @@ def disambiguate(bitmaps, names, max_rounds=6):
             break
 
 
-def rasterize(contours, s, warp, SS):
-    """Devuelve (mask_hi, x0, ytop, w, h) o None si vacío."""
+def rasterize(contours, s, warp, SS, phase=0.0):
+    """Devuelve (mask_hi, x0, ytop, w, h) o None si vacío. `phase` desplaza el
+    glifo en horizontal (en píxeles) para elegir cómo cae sobre la rejilla."""
     if not contours:
         return None
-    cs = [np.column_stack([c[:, 0], warp(c[:, 1])]) for c in contours]
+    cs = [np.column_stack([c[:, 0] + phase / s, warp(c[:, 1])]) for c in contours]
     pts = np.concatenate(cs)
     xmin, xmax = pts[:, 0].min() * s, pts[:, 0].max() * s
     ymin, ymax = pts[:, 1].min() * s, pts[:, 1].max() * s
@@ -631,7 +632,7 @@ def _cells(gb):
 DEBUG = None
 
 
-def separate_marks(font, bitmaps, important=None, max_steps=4):
+def separate_marks(font, bitmaps, important=None, max_steps=4, centred=None, gaps=None):
     """Revisa cada par base+marca de GPOS (MarkBase, MarkLig, MarkMark). Si la
     marca toca la base en píxeles, aleja el anclaje de la base de a 1 px. Como
     un anclaje lo comparten todas las marcas de su clase, se elige el
@@ -640,6 +641,19 @@ def separate_marks(font, bitmaps, important=None, max_steps=4):
     if "GPOS" not in font:
         return 0
     important = important or {}
+    centred = {b: dict(v) for b, v in (centred or {}).items()}
+    gaps = gaps or {}
+    size_px = font["head"].unitsPerEm // PX
+
+    def target_gap(ref):
+        """Aire objetivo en px. Las marcas que en el original están cerca del
+        trazo (< 0.3 em) se compactan a la mitad, mínimo 1 px, como se hace en
+        pixel art; las que están lejos por diseño conservan su distancia."""
+        if ref is None:
+            return None
+        if ref / size_px <= 0.3:
+            return max(1, int(round(ref * 0.5)))
+        return max(1, int(round(ref)))
     moved = 0
     cell_cache = {}
 
@@ -649,17 +663,52 @@ def separate_marks(font, bitmaps, important=None, max_steps=4):
         return cell_cache[n]
 
     def gap(bc, mc, ox, oy):
-        """Píxeles de aire entre marca y base (0 = se tocan, también en diagonal)."""
+        """Aire entre marca y base. Devuelve (toca, aire_vertical):
+        - toca: se tocan en algún píxel, también en diagonal;
+        - aire_vertical: filas vacías entre la marca y el trazo que tiene justo
+          debajo (marca arriba) o encima (marca abajo), en sus mismas columnas.
+          Así los puntos de ت se miden contra la curva, no contra las puntas."""
         bx, by = bc
         mx, my = mc[0] + ox, mc[1] + oy
         d = np.maximum(np.abs(mx[:, None] - bx[None, :]), np.abs(my[:, None] - by[None, :]))
-        return int(d.min()) - 1
+        touch = int(d.min()) <= 1
+        cols = set(mx.tolist())
+        sel = np.array([x in cols for x in bx])
+        if not sel.any():
+            # sin trazo en esas columnas: usar las columnas vecinas
+            sel = np.array([any(abs(x - c) <= 1 for c in cols) for x in bx])
+        if not sel.any():
+            return touch, int(d.min()) - 1
+        sy = by[sel]
+        above = my.mean() >= by.mean()
+        if above:
+            under = sy[sy < my.min()]
+            v = my.min() - under.max() - 1 if len(under) else 9
+        else:
+            over = sy[sy > my.max()]
+            v = over.min() - my.max() - 1 if len(over) else 9
+        return touch, int(v)
 
     def fix(base, anchor, marks):
         nonlocal moved
         bc = cells(base)
         if bc is None or anchor is None or not marks:
             return
+        # 1) centrado horizontal primero: la marca más usada de las que en el
+        #    original van centradas sobre esta base queda exactamente en su eje
+        cands = [(centred[base][m], m, ma) for m, ma in marks
+                 if m in centred.get(base, {}) and cells(m) is not None]
+        is_centred = bool(cands)
+        if cands:
+            _, m, ma = max(cands, key=lambda t: t[0])
+            mc = cells(m)
+            ox = (anchor.XCoordinate - ma.XCoordinate) // PX
+            b2 = bc[0].min() + bc[0].max() + 1
+            m2 = mc[0].min() + mc[0].max() + 1 + 2 * ox
+            if (b2 - m2) % 2 == 0 and b2 != m2:
+                anchor.XCoordinate += (b2 - m2) // 2 * PX
+                moved += 1
+        # 2) después, la altura
         items = []
         for m, manchor in marks:
             mc = cells(m)
@@ -674,23 +723,28 @@ def separate_marks(font, bitmaps, important=None, max_steps=4):
         if not items:
             return
 
-        def cost(k):
-            c = 0.15 * abs(k)
-            for w, mc, ox, oy, above, _ in items:
-                g = gap(bc, mc, ox, oy + k)
-                if g < 1:
+        def cost(k, dx=0):
+            c = 0.15 * abs(k) + 0.4 * abs(dx)
+            for w, mc, ox, oy, above, m in items:
+                touch, g = gap(bc, mc, ox + dx, oy + k)
+                # objetivo: el aire del original, redondeado, y nunca menos de 1
+                target = target_gap(gaps.get((base, m)))
+                if touch or g < 1:
                     # pegada: grave si muchas letras ponen esta marca en esta
                     # base; si no hay evidencia de uso, casi no pesa (así no se
                     # mueve un anclaje por marcas que esa letra nunca lleva)
                     c += 50 * w + 0.05
-                else:
-                    c += 2 * w * (g - 1)  # objetivo: exactamente 1 px de aire
+                elif target is not None:
+                    c += 2 * w * abs(g - target)
             return c
 
-        best = min(range(-max_steps, max_steps + 1), key=cost)
-        if DEBUG is not None and base in DEBUG:
-            for k in range(-max_steps, max_steps + 1):
-                print(base, k, round(cost(k), 2), [(it[5], gap(bc, it[1], it[2], it[3] + k)) for it in items if it[0] > 2 and gap(bc, it[1], it[2], it[3] + k) != 1][:8])
+        # si la marca no va centrada, se permite correrla 1 px a los lados
+        dxs = (0,) if is_centred else (-1, 0, 1)
+        best, best_dx = min(((k, dx) for k in range(-max_steps, max_steps + 1) for dx in dxs),
+                            key=lambda kd: cost(*kd))
+        if best_dx:
+            anchor.XCoordinate += best_dx * PX
+            moved += 1
         if best:
             anchor.YCoordinate += best * PX
             moved += 1
@@ -723,6 +777,30 @@ def separate_marks(font, bitmaps, important=None, max_steps=4):
                 # solo corrige diferencias de redondeo (1 px), no rediseña
                 if (mean >= 0) == above and 0 < abs(e - target) <= 1:
                     a.YCoordinate += int(e - target) * PX
+            # horizontal: el centro de cada marca respecto a su anclaje (en
+            # medios píxeles) se iguala al más usado, si difiere en 1 px
+            cx = []
+            for m, a, *_ in info:
+                xs = cells(m)[0]
+                cx.append(xs.min() + xs.max() + 1 - 2 * (a.XCoordinate // PX))
+            # se agrupa por paridad: una marca de ancho impar solo puede
+            # compararse con otras de ancho impar (centro en medio de un píxel)
+            for par in (0, 1):
+                idx = [j for j, c in enumerate(cx) if c % 2 == par]
+                if len(idx) < 2:
+                    continue
+                idx.sort(key=lambda j: cx[j])
+                tot = sum(w[j] for j in idx) / 2
+                cum, target = 0.0, cx[idx[0]]
+                for j in idx:
+                    cum += w[j]
+                    if cum >= tot:
+                        target = cx[j]
+                        break
+                for j in idx:
+                    d = cx[j] - target
+                    if d and abs(d) <= 2:
+                        info[j][1].XCoordinate += (d // 2) * PX
 
     for lk in font["GPOS"].table.LookupList.Lookup:
         for st in lk.SubTable:
@@ -802,6 +880,154 @@ def bitmap_to_glyph(gb: GlyphBitmap):
     return pen.glyph()
 
 
+# ---------------------------------------------------------------- simetría
+def _ink_cols(b):
+    cols = np.nonzero(b.any(axis=0))[0]
+    return (cols.min(), cols.max()) if len(cols) else (0, -1)
+
+
+def mirror_score(mask):
+    """IoU entre la forma y su reflejo respecto a su propio eje central."""
+    c0, c1 = _ink_cols(mask)
+    if c1 < c0:
+        return 0.0
+    m = mask[:, c0:c1 + 1]
+    f = m[:, ::-1]
+    return (m & f).sum() / max(1, (m | f).sum())
+
+
+def asymmetry(b):
+    c0, c1 = _ink_cols(b)
+    m = b[:, c0:c1 + 1]
+    return int((m != m[:, ::-1]).sum())
+
+
+def symmetrize(b, cov):
+    """Hace exactamente simétrico un bitmap casi simétrico. Prueba varios ejes
+    (entre columnas o en el centro de una columna, para poder quedar con
+    ancho impar y trazo central de 1 px) y elige el que menos cambia la tinta,
+    sin romper la topología."""
+    c0, c1 = _ink_cols(b)
+    m = b[:, c0:c1 + 1]
+    if not (m != m[:, ::-1]).any():
+        return b
+    h, W = m.shape
+    base_topo = pixel_topology(b)
+    target_ink = float(cov.sum())
+    best = None
+    centre2 = W - 1  # eje actual en medios píxeles (índices de columna x2)
+    for axis2 in (centre2 - 1, centre2, centre2 + 1):
+        mir = np.zeros_like(m)
+        for j in range(W):
+            k = axis2 - j
+            if 0 <= k < W:
+                mir[:, j] = m[:, k]
+        for cand in (m | mir, m & mir):
+            # recortar a la parte simétrica respecto al eje
+            out = np.zeros_like(cand)
+            for j in range(W):
+                k = axis2 - j
+                if 0 <= k < W:
+                    out[:, j] = cand[:, j]
+            nb = b.copy()
+            nb[:, c0:c1 + 1] = out
+            if not nb.any() or asymmetry(nb) or pixel_topology(nb) != base_topo:
+                continue
+            err = abs(float(nb.sum()) - target_ink) + 0.3 * float((nb != b).sum())
+            if best is None or err < best[0]:
+                best = (err, nb)
+    return best[1] if best else b
+
+
+def centred_pieces(mask, SS, tol=0.3):
+    """Piezas pequeñas (puntos, acentos) que en el original están centradas
+    sobre o bajo el cuerpo principal. Devuelve [(centro_y_relativo, arriba)]."""
+    lab, n = ndimage.label(mask, structure=EIGHT)
+    if n < 2:
+        return []
+    areas = ndimage.sum(np.ones_like(mask), lab, index=np.arange(1, n + 1))
+    body = int(np.argmax(areas)) + 1
+    by, bx = np.nonzero(lab == body)
+    bcx = (bx.min() + bx.max() + 1) / 2 / SS
+    out = []
+    for k in range(1, n + 1):
+        if k == body or areas[k - 1] > 3 * SS * SS or areas[k - 1] < 0.15 * SS * SS:
+            continue
+        ys, xs = np.nonzero(lab == k)
+        above = ys.max() < by.min()
+        below = ys.min() > by.max()
+        if not (above or below):
+            continue
+        cx = (xs.min() + xs.max() + 1) / 2 / SS
+        if abs(cx - bcx) <= tol:
+            piece = (lab == k)[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+            out.append(((ys.mean() / SS), above, mirror_score(piece) >= 0.9))
+    return out
+
+
+def centre_pieces(b, wanted):
+    """Centra en horizontal, sobre el cuerpo, las piezas pequeñas que en el
+    original están centradas. Devuelve (bits, error residual en medios px)."""
+    if not wanted:
+        return b, 0
+    lab, n = ndimage.label(b, structure=EIGHT)
+    if n < 2:
+        return b, 0
+    sizes = ndimage.sum(b, lab, index=np.arange(1, n + 1))
+    body = int(np.argmax(sizes)) + 1
+    by, bx = np.nonzero(lab == body)
+    b2c = bx.min() + bx.max() + 1  # centro del cuerpo en medios píxeles
+    out = b.copy()
+    resid = 0
+    for k in range(1, n + 1):
+        if k == body:
+            continue
+        ys, xs = np.nonzero(lab == k)
+        above = ys.max() < by.min()
+        if not (above or ys.min() > by.max()):
+            continue
+        # ¿corresponde a una pieza centrada del original? (mismo lado, altura cercana)
+        match = [sy for y, a, sy in wanted if a == above and abs(ys.mean() - y) <= 1.5]
+        if not match:
+            continue
+        if match[0]:
+            # la pieza es simétrica en el original: también en píxeles
+            r0, r1, c0, c1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+            sub = (lab[r0:r1, c0:c1] == k)
+            # en piezas pequeñas solo se agrega el píxel que falta (unión con el
+            # reflejo), nunca se quita: quitar aplana acentos de 2-3 píxeles
+            fixed = sub | sub[:, ::-1]
+            if not np.array_equal(fixed, sub):
+                region = out[r0:r1, c0:c1]
+                others = region & ~sub
+                if not (fixed & others).any():
+                    region[sub] = False
+                    region[fixed] = True
+                    lab = lab.copy()
+                    lab[r0:r1, c0:c1][sub] = 0
+                    lab[r0:r1, c0:c1][fixed] = k
+                    ys, xs = np.nonzero(lab == k)
+                    resid += 0
+        p2c = xs.min() + xs.max() + 1
+        d2 = b2c - p2c
+        shift = int(np.floor(d2 / 2)) if d2 >= 0 else -int(np.floor(-d2 / 2))
+        resid += abs(d2 - 2 * shift)
+        if shift:
+            nx = xs + shift
+            if nx.min() < 0 or nx.max() >= b.shape[1]:
+                continue
+            trial = out.copy()
+            trial[ys, xs] = False
+            if trial[ys, nx].any():
+                continue
+            trial[ys, nx] = True
+            near = ndimage.binary_dilation(trial & (lab != k) & (lab > 0), structure=EIGHT)
+            if near[ys, nx].any():
+                continue
+            out = trial
+    return out, resid
+
+
 def pixelize(src: TTFont, outlines, size: int, zones=None, glyph_names=None,
              threshold=None, SS=None, only=None, family=None):
     upem = src["head"].unitsPerEm
@@ -823,11 +1049,7 @@ def pixelize(src: TTFont, outlines, size: int, zones=None, glyph_names=None,
         samp = [coverage(r[0], SS) for n, r in list(rasters.items())[:: max(1, len(rasters) // 400)] if r]
         threshold = choose_threshold(samp)
 
-    bitmaps = {}
-    for n, r in rasters.items():
-        if r is None:
-            bitmaps[n] = GlyphBitmap(None)
-            continue
+    def process(r):
         mask, x0, ytop, w, h = r
         cov = coverage(mask, SS)
         b = cov >= threshold
@@ -844,21 +1066,165 @@ def pixelize(src: TTFont, outlines, size: int, zones=None, glyph_names=None,
                 issues = [i for i in issues if not i.startswith("piezas")]
                 if pixel_topology(b)[0] != len(comps_):
                     issues.append(f"piezas {pixel_topology(b)[0]}/{len(comps_)}")
-        hh = hash((x0, ytop, mask.shape, np.packbits(mask).tobytes()))
+        return b, x0, ytop, issues, cov
+
+    hmtx_src = src["hmtx"].metrics
+    gdef = src["GDEF"].table if "GDEF" in src else None
+    gclass = gdef.GlyphClassDef.classDefs if gdef and gdef.GlyphClassDef else {}
+    if not hasattr(src, "_letter_marks"):
+        src._letter_marks = letter_marks(src)
+    centred_marks = centred_mark_pairs(src, outlines, src._letter_marks, s)
+    mark_gaps = original_mark_gaps(src, outlines, src._letter_marks, s, warp)
+
+    def joins(n):
+        """Glifos cuya tinta llega al borde del avance (uniones del árabe):
+        no se desplazan para no romper la conexión."""
+        cs = outlines.get(n)
+        if not cs:
+            return False
+        pts = np.concatenate(cs)
+        adv = hmtx_src[n][0]
+        return adv > 0 and (pts[:, 0].min() * s < 0.15 or (adv - pts[:, 0].max()) * s < 0.15)
+
+    bitmaps = {}
+    # primero las marcas: su ancho decide la paridad de las bases
+    names = sorted(rasters, key=lambda n: gclass.get(n) != 3)
+    for n in names:
+        r = rasters[n]
+        if r is None:
+            bitmaps[n] = GlyphBitmap(None)
+            continue
+        mask = r[0]
+        sym = mirror_score(mask) >= 0.92
+        wanted = centred_pieces(mask, SS)
+        mk = [(bitmaps[m], w) for m, w in centred_marks.get(n, []) if m in bitmaps and bitmaps[m].bits is not None]
+        phases = [0.0]
+        # la alineación de medio píxel se prueba solo para letras simétricas y
+        # bases con marcas GPOS centradas; los acentos dentro de una letra se
+        # centran moviéndolos píxeles enteros (centre_pieces)
+        if (sym or mk) and not joins(n):
+            phases = [0.0, 0.25, 0.5, 0.75]
+        best = None
+        for ph in phases:
+            rr = r if ph == 0.0 else rasterize(outlines.get(n), s, warp, SS, ph)
+            b, x0, ytop, issues, cov = process(rr)
+            if sym:
+                b = symmetrize(b, cov)
+            b, resid = centre_pieces(b, wanted)
+            c0, c1 = _ink_cols(b)
+            wpx = c1 - c0 + 1
+            par = sum(w for gb, w in mk if (wpx - _ink_cols(gb.bits)[1] + _ink_cols(gb.bits)[0] - 1) % 2)
+            # tinta: simetrizar con ancho par obliga a engrosar el trazo central;
+            # se prefiere la alineación que conserva el grosor del original
+            ink = abs(float(b.sum()) - float(rr[0].sum()) / (SS * SS))
+            cost = ((2 * asymmetry(b) if sym else 0) + resid + 2 * par + 3 * len(issues)
+                    + 0.5 * ink + 0.1 * (ph != 0))
+            if best is None or cost < best[0]:
+                best = (cost, b, x0, ytop, issues, cov, rr[0])
+        _, b, x0, ytop, issues, cov, mask = best
+        hh = hash((np.packbits(r[0]).tobytes(), r[0].shape, r[1], r[2]))
         bitmaps[n] = GlyphBitmap(b, x0, ytop, hh, not issues, issues, cov.astype(np.float32))
 
     disambiguate(bitmaps, [n for n in order if bitmaps[n].bits is not None])
 
-    if not hasattr(src, "_letter_marks"):
-        src._letter_marks = letter_marks(src)
     bounds = {}
     for n in order:
         cs = outlines.get(n)
         if cs:
             pts = np.concatenate(cs)
             bounds[n] = (pts[:, 0].min(), pts[:, 0].max())
-    font = build_font(src, bitmaps, size, warp, family, src._letter_marks, bounds)
+    font = build_font(src, bitmaps, size, warp, family, src._letter_marks, bounds, centred_marks,
+                      mark_gaps)
     return PixelResult(size, font, bitmaps, threshold, [float(z * s) for z in warp.dst])
+
+
+def centred_mark_pairs(src, outlines, usage, s, tol=0.3):
+    """{base: [(marca, peso)]} para los pares que en el original van centrados:
+    el centro de la marca cae a menos de `tol` px del centro de la base."""
+    out = {}
+    if "GPOS" not in src:
+        return out
+
+    def centre(n):
+        cs = outlines.get(n)
+        if not cs:
+            return None
+        pts = np.concatenate(cs)
+        return (pts[:, 0].min() + pts[:, 0].max()) / 2
+
+    for lk in src["GPOS"].table.LookupList.Lookup:
+        for st in lk.SubTable:
+            st = getattr(st, "ExtSubTable", st)
+            if getattr(st, "LookupType", lk.LookupType) != 4:
+                continue
+            marks = {}
+            for g, rec in zip(st.MarkCoverage.glyphs, st.MarkArray.MarkRecord):
+                marks.setdefault(rec.Class, []).append((g, rec.MarkAnchor))
+            for b, rec in zip(st.BaseCoverage.glyphs, st.BaseArray.BaseRecord):
+                cb = centre(b)
+                if cb is None:
+                    continue
+                for c, a in enumerate(rec.BaseAnchor):
+                    if a is None:
+                        continue
+                    for m, ma in marks.get(c, []):
+                        w = usage.get((b, m), 0)
+                        cm = centre(m)
+                        if not w or cm is None:
+                            continue
+                        if abs(a.XCoordinate - ma.XCoordinate + cm - cb) * s <= tol:
+                            out.setdefault(b, []).append((m, w))
+    return out
+
+
+def original_mark_gaps(src, outlines, usage, s, warp):
+    """{(base, marca): aire vertical en px} en el diseño original: filas entre la
+    marca y el trazo de la base que tiene justo debajo (o encima) en sus
+    columnas. Es la referencia que la versión pixel debe respetar."""
+    out = {}
+    if "GPOS" not in src:
+        return out
+
+    def pts(n):
+        cs = outlines.get(n)
+        return np.concatenate(cs) if cs else None
+
+    for lk in src["GPOS"].table.LookupList.Lookup:
+        for st in lk.SubTable:
+            st = getattr(st, "ExtSubTable", st)
+            if getattr(st, "LookupType", lk.LookupType) != 4:
+                continue
+            marks = {}
+            for g, rec in zip(st.MarkCoverage.glyphs, st.MarkArray.MarkRecord):
+                marks.setdefault(rec.Class, []).append((g, rec.MarkAnchor))
+            for b, rec in zip(st.BaseCoverage.glyphs, st.BaseArray.BaseRecord):
+                bp = pts(b)
+                if bp is None:
+                    continue
+                for c, a in enumerate(rec.BaseAnchor):
+                    if a is None:
+                        continue
+                    for m, ma in marks.get(c, []):
+                        if not usage.get((b, m)) or (b, m) in out:
+                            continue
+                        mp = pts(m)
+                        if mp is None:
+                            continue
+                        mx = mp[:, 0] + a.XCoordinate - ma.XCoordinate
+                        my = warp(mp[:, 1] + a.YCoordinate - ma.YCoordinate)
+                        by = warp(bp[:, 1])
+                        sel = (bp[:, 0] >= mx.min()) & (bp[:, 0] <= mx.max())
+                        if not sel.any():
+                            continue
+                        if my.mean() >= by.mean():
+                            under = by[sel & (by < my.min())]
+                            g = (my.min() - under.max()) * s if len(under) else None
+                        else:
+                            over = by[sel & (by > my.max())]
+                            g = (over.min() - my.max()) * s if len(over) else None
+                        if g is not None:
+                            out[(b, m)] = float(g)
+    return out
 
 
 def letter_marks(src: TTFont):
@@ -873,18 +1239,34 @@ def letter_marks(src: TTFont):
     gdef = src["GDEF"].table if "GDEF" in src else None
     classes = gdef.GlyphClassDef.classDefs if gdef and gdef.GlyphClassDef else {}
     out = Counter()
-    for cp in src.getBestCmap():
-        c = chr(cp)
-        if not unicodedata.category(c).startswith("L"):
-            continue
+    if not any(v == 3 for v in classes.values()):
+        return {}  # la fuente no tiene marcas (p. ej. CJK)
+    letters = [chr(cp) for cp in sorted(src.getBestCmap()) if unicodedata.category(chr(cp)).startswith("L")]
+    # vecinos de muestra: las variantes contextuales (inicial, media, final,
+    # tras ciertas letras...) solo aparecen con letras alrededor
+    step = max(1, len(letters) // 60)
+    neigh = letters[::step] + ["\u0640"]
+    for c in letters:
         seen = set()
-        for t in (c, "\u0640" + c, c + "\u0640", "\u0640" + c + "\u0640"):
+        # (texto, qué cluster es la letra c: "all", "first", "last", "middle")
+        ctx = [(c, "all"), ("\u0640" + c + "\u0640", "middle")]
+        ctx += [(x + c, "last") for x in neigh] + [(c + x, "first") for x in neigh]
+        for t, where in ctx:
             infos, _, _ = shape(data, t)
             names = [order[i.codepoint] for i in infos]
+            cl = sorted({i.cluster for i in infos})
+            if where == "all":
+                keep = set(cl)
+            elif where == "first":
+                keep = {cl[0]}
+            elif where == "last":
+                keep = {cl[-1]}
+            else:
+                keep = {cl[1]} if len(cl) >= 3 else set()
             for i, n in zip(infos, names):
-                if classes.get(n) != 3:
+                if classes.get(n) != 3 or i.cluster not in keep:
                     continue
-                # base = glifo no-marca del mismo cluster
+                # base = glifo no-marca del mismo cluster (la letra c)
                 bases = [b for j, b in zip(infos, names) if j.cluster == i.cluster and classes.get(b) != 3]
                 seen.add(n)
                 for b in bases:
@@ -893,7 +1275,8 @@ def letter_marks(src: TTFont):
     return dict(out)
 
 
-def build_font(src: TTFont, bitmaps, size, warp, family=None, important=None, bounds=None):
+def build_font(src: TTFont, bitmaps, size, warp, family=None, important=None, bounds=None,
+               centred=None, mark_gaps=None):
     import copy, io
     buf = io.BytesIO()
     src.save(buf)
@@ -956,7 +1339,7 @@ def build_font(src: TTFont, bitmaps, size, warp, family=None, important=None, bo
         hmtx[n] = (adv_px * PX, lsb)
 
     snap_layout(f, ywarp_units)
-    f.marks_moved = separate_marks(f, bitmaps, important)
+    f.marks_moved = separate_marks(f, bitmaps, important, centred=centred, gaps=mark_gaps)
 
     def up(v):
         return int(math.ceil(v / PX)) * PX

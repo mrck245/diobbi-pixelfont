@@ -10,7 +10,7 @@
    "collision_examples": [],
    "topo_fail": 56,
    "topo_total": 120,
-   "ocr": 0.692,
+   "ocr": 0.748,
    "ocr_base": 0.929,
    "pieces": "84/79",
    "ok": false,
@@ -32,7 +32,7 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 47,
+   "topo_fail": 45,
    "topo_total": 120,
    "ocr": 0.886,
    "ocr_base": 0.929,
@@ -62,5 +62,5 @@
   550.0,
   714.0
  ],
- "seconds": 10
+ "seconds": 12
 }

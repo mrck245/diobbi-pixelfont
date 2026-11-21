@@ -51,7 +51,7 @@ def find_min_size(cfg, outdir, log=print, ocr_ratio=0.9, pieces_min=0.95):
         topo = topo_failures(r.bitmaps, cmap_names)
         score = ocr_score(data, ocr_lines, cfg["ocr"], size, True)
         pr, got, ref = pieces_ratio(data, sdata, lines, size)
-        ok = not col and score >= ocr_ratio * base and pr >= pieces_min
+        ok = not col and score >= ocr_ratio * base and pieces_min <= pr <= 2 - pieces_min
         res = dict(size=size, collisions=len(col), collision_examples=col[:6],
                    topo_fail=len(topo), topo_total=len(cmap_names), ocr=round(score, 3),
                    ocr_base=round(base, 3), pieces=f"{got}/{ref}", ok=ok, threshold=round(r.threshold, 3))

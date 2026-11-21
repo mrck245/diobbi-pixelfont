@@ -2,15 +2,15 @@
  "id": "urdu-naskh",
  "name": "Urdu · Noto Naskh Arabic",
  "font": "NotoNaskhArabic-VF.ttf",
- "min_size": 11,
+ "min_size": 10,
  "results": [
   {
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 586,
+   "topo_fail": 585,
    "topo_total": 1037,
-   "ocr": 0.816,
+   "ocr": 0.728,
    "ocr_base": 1.0,
    "pieces": "62/67",
    "ok": false,
@@ -25,9 +25,9 @@
      "uni06E8"
     ]
    ],
-   "topo_fail": 421,
+   "topo_fail": 420,
    "topo_total": 1037,
-   "ocr": 0.752,
+   "ocr": 0.736,
    "ocr_base": 1.0,
    "pieces": "60/69",
    "ok": false,
@@ -39,7 +39,7 @@
    "collision_examples": [],
    "topo_fail": 431,
    "topo_total": 1037,
-   "ocr": 0.88,
+   "ocr": 0.904,
    "ocr_base": 1.0,
    "pieces": "61/69",
    "ok": false,
@@ -47,19 +47,14 @@
   },
   {
    "size": 10,
-   "collisions": 1,
-   "collision_examples": [
-    [
-     "uni06EB",
-     "uni06EC"
-    ]
-   ],
-   "topo_fail": 427,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 425,
    "topo_total": 1037,
-   "ocr": 0.952,
+   "ocr": 0.936,
    "ocr_base": 1.0,
-   "pieces": "74/69",
-   "ok": false,
+   "pieces": "72/69",
+   "ok": true,
    "threshold": 0.488
   },
   {
@@ -68,27 +63,15 @@
    "collision_examples": [],
    "topo_fail": 282,
    "topo_total": 1037,
-   "ocr": 0.984,
+   "ocr": 0.936,
    "ocr_base": 1.0,
    "pieces": "68/69",
    "ok": true,
    "threshold": 0.477
-  },
-  {
-   "size": 12,
-   "collisions": 0,
-   "collision_examples": [],
-   "topo_fail": 281,
-   "topo_total": 1037,
-   "ocr": 0.984,
-   "ocr_base": 1.0,
-   "pieces": "68/69",
-   "ok": true,
-   "threshold": 0.492
   }
  ],
  "files": {
-  "11": "salida/urdu-naskh-11px.ttf"
+  "10": "salida/urdu-naskh-10px.ttf"
  },
  "zones": [
   -260.0,
@@ -96,5 +79,5 @@
   340.0,
   670.0
  ],
- "seconds": 82
+ "seconds": 84
 }

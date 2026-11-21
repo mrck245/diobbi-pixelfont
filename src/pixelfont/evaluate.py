@@ -79,7 +79,7 @@ def ocr_score(font_data, lines, lang, px, mono, target_em=48):
     return float(np.mean(scores))
 
 
-def line_pieces(font_data, line, px, mono, ref_px=None):
+def line_pieces(font_data, line, px, mono, ref_px=None, dot_triangles=True):
     """Cuenta las piezas separadas (componentes conexos) de una línea
     renderizada. En una fuente pixel, puntos o acentos pegados al cuerpo
     reducen el número de piezas frente al original."""
@@ -88,7 +88,7 @@ def line_pieces(font_data, line, px, mono, ref_px=None):
     lab, n = ndimage.label(img, structure=np.ones((3, 3), bool))
     if n == 0:
         return 0
-    if mono:
+    if mono and dot_triangles:
         # grupos de puntos que solo se tocan en diagonal (p. ej. el triángulo
         # de ث) cuentan como puntos separados
         extra = 0
@@ -109,6 +109,13 @@ def line_pieces(font_data, line, px, mono, ref_px=None):
 
 
 def pieces_ratio(pixel_data, src_data, lines, size, ref_px=64):
-    got = sum(line_pieces(pixel_data, ln, size, True) for ln in lines)
-    ref = sum(line_pieces(src_data, ln, ref_px, False, ref_px=size) for ln in lines)
+    """Un triángulo de 3 píxeles puede ser tres puntos (ث) o una breve (ă):
+    por línea se usa la lectura que coincide mejor con el original."""
+    got = ref = 0
+    for ln in lines:
+        r = line_pieces(src_data, ln, ref_px, False, ref_px=size)
+        a = line_pieces(pixel_data, ln, size, True, dot_triangles=True)
+        b = line_pieces(pixel_data, ln, size, True, dot_triangles=False)
+        got += a if abs(a - r) <= abs(b - r) else b
+        ref += r
     return got / ref if ref else 1.0, got, ref

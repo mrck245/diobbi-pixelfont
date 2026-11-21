@@ -10,9 +10,9 @@
    "collision_examples": [],
    "topo_fail": 109,
    "topo_total": 350,
-   "ocr": 0.404,
+   "ocr": 0.426,
    "ocr_base": 0.967,
-   "pieces": "120/113",
+   "pieces": "118/113",
    "ok": false,
    "threshold": 0.438
   },
@@ -21,13 +21,13 @@
    "collisions": 1,
    "collision_examples": [
     [
-     "Oacute",
-     "Ocircumflex"
+     "ecaron",
+     "ecircumflex"
     ]
    ],
-   "topo_fail": 92,
+   "topo_fail": 88,
    "topo_total": 350,
-   "ocr": 0.503,
+   "ocr": 0.514,
    "ocr_base": 0.967,
    "pieces": "119/125",
    "ok": false,
@@ -37,11 +37,11 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 52,
+   "topo_fail": 48,
    "topo_total": 350,
-   "ocr": 0.722,
+   "ocr": 0.723,
    "ocr_base": 0.967,
-   "pieces": "123/125",
+   "pieces": "124/125",
    "ok": false,
    "threshold": 0.438
   },
@@ -49,9 +49,9 @@
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 38,
+   "topo_fail": 35,
    "topo_total": 350,
-   "ocr": 0.706,
+   "ocr": 0.749,
    "ocr_base": 0.967,
    "pieces": "120/125",
    "ok": false,
@@ -61,11 +61,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 41,
+   "topo_fail": 38,
    "topo_total": 350,
    "ocr": 0.829,
    "ocr_base": 0.967,
-   "pieces": "124/125",
+   "pieces": "122/125",
    "ok": false,
    "threshold": 0.5
   },
@@ -73,7 +73,7 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 24,
+   "topo_fail": 23,
    "topo_total": 350,
    "ocr": 0.913,
    "ocr_base": 0.967,
@@ -85,9 +85,9 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 24,
+   "topo_fail": 23,
    "topo_total": 350,
-   "ocr": 0.946,
+   "ocr": 0.936,
    "ocr_base": 0.967,
    "pieces": "125/125",
    "ok": true,
@@ -103,5 +103,5 @@
   710.0,
   940.0
  ],
- "seconds": 16
+ "seconds": 20
 }
