@@ -2,16 +2,17 @@
  "id": "rumano-serif",
  "name": "Rumano · Crimson Text (serif)",
  "font": "CrimsonText-Regular.ttf",
- "min_size": 12,
+ "min_size": 11,
  "results": [
   {
    "size": 6,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 172,
+   "topo_fail": 102,
    "topo_total": 340,
-   "ocr": 0.172,
+   "ocr": 0.373,
    "ocr_base": 0.934,
+   "pieces": "89/121",
    "ok": false,
    "threshold": 0.391
   },
@@ -19,10 +20,11 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 169,
+   "topo_fail": 109,
    "topo_total": 340,
-   "ocr": 0.146,
+   "ocr": 0.328,
    "ocr_base": 0.934,
+   "pieces": "103/125",
    "ok": false,
    "threshold": 0.391
   },
@@ -30,10 +32,11 @@
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 117,
+   "topo_fail": 82,
    "topo_total": 340,
-   "ocr": 0.351,
+   "ocr": 0.553,
    "ocr_base": 0.934,
+   "pieces": "122/125",
    "ok": false,
    "threshold": 0.41
   },
@@ -41,10 +44,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 111,
+   "topo_fail": 96,
    "topo_total": 340,
-   "ocr": 0.662,
+   "ocr": 0.739,
    "ocr_base": 0.934,
+   "pieces": "131/125",
    "ok": false,
    "threshold": 0.441
   },
@@ -52,10 +56,11 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 81,
+   "topo_fail": 71,
    "topo_total": 340,
    "ocr": 0.806,
    "ocr_base": 0.934,
+   "pieces": "125/125",
    "ok": false,
    "threshold": 0.453
   },
@@ -63,43 +68,34 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 69,
+   "topo_fail": 60,
    "topo_total": 340,
-   "ocr": 0.839,
+   "ocr": 0.862,
    "ocr_base": 0.934,
-   "ok": false,
+   "pieces": "125/125",
+   "ok": true,
    "threshold": 0.469
   },
   {
    "size": 12,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 35,
-   "topo_total": 340,
-   "ocr": 0.903,
-   "ocr_base": 0.934,
-   "ok": true,
-   "threshold": 0.473
-  },
-  {
-   "size": 13,
-   "collisions": 0,
-   "collision_examples": [],
-   "topo_fail": 20,
+   "topo_fail": 29,
    "topo_total": 340,
    "ocr": 0.904,
    "ocr_base": 0.934,
+   "pieces": "126/125",
    "ok": true,
-   "threshold": 0.5
+   "threshold": 0.473
   }
  ],
  "files": {
-  "12": "salida/rumano-serif-12px.ttf"
+  "11": "salida/rumano-serif-11px.ttf"
  },
  "zones": [
   0.0,
   430.0,
   645.12
  ],
- "seconds": 27
+ "seconds": 22
 }

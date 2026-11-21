@@ -396,6 +396,65 @@ def smooth_bumps(b, cov):
     return b
 
 
+def relayout_small(b, cov, mask, SS, threshold, max_small=3.0):
+    """Si piezas pequeñas (puntos, diacríticos) quedaron pegadas entre sí o al
+    cuerpo, las vuelve a colocar con al menos 1 px de separación, moviéndolas
+    lo menos posible. Devuelve (bits, dx, dy) con el desplazamiento del lienzo."""
+    lab, comps, _, _ = topo_ref(mask, SS)
+    if len(comps) < 2 or pixel_topology(b)[0] >= len(comps):
+        return b, 0, 0
+    areas = {k: (lab == k).sum() / (SS * SS) for k in comps}
+    small = [k for k in comps if areas[k] <= max_small]
+    big = [k for k in comps if areas[k] > max_small]
+    if not small:
+        return b, 0, 0
+    P = 3
+    h, w = b.shape
+    canvas = np.zeros((h + 2 * P, w + 2 * P), bool)
+    ccov = {k: _cov_of(lab, k, SS) for k in comps}
+    # cuerpo: píxeles actuales que pertenecen a piezas grandes
+    if big:
+        stack = np.stack([ccov[k] for k in comps])
+        owner = np.array(comps)[np.argmax(stack, axis=0)]
+        body = b & np.isin(owner, big)
+    else:
+        body = np.zeros_like(b)
+    canvas[P:P + h, P:P + w] = body
+    centre_y = (np.nonzero(body)[0].mean() if body.any() else h / 2)
+    for k in sorted(small, key=lambda k: -areas[k]):
+        piece = ccov[k] >= threshold
+        if not piece.any():
+            piece[np.unravel_index(np.argmax(ccov[k]), piece.shape)] = True
+        ys, xs = np.nonzero(piece)
+        up = ys.mean() < centre_y  # la pieza está por encima del cuerpo
+        best = None
+        for dist in range(0, P + 1):
+            cands = []
+            for dy in range(-dist, dist + 1):
+                for dx in range(-dist, dist + 1):
+                    if max(abs(dy), abs(dx)) != dist:
+                        continue
+                    # preferir alejarse del cuerpo en vertical
+                    pref = (dy > 0) if up else (dy < 0)
+                    cands.append((pref, abs(dx), dy, dx))
+            for _, _, dy, dx in sorted(cands):
+                Y, X = ys + P + dy, xs + P + dx
+                if Y.min() < 0 or X.min() < 0 or Y.max() >= canvas.shape[0] or X.max() >= canvas.shape[1]:
+                    continue
+                near = ndimage.binary_dilation(canvas, structure=EIGHT)
+                if not near[Y, X].any():
+                    best = (Y, X)
+                    break
+            if best:
+                break
+        if best is None:
+            best = (ys + P, xs + P)
+        canvas[best] = True
+    rows, cols = np.nonzero(canvas)
+    r0, r1, c0, c1 = rows.min(), rows.max() + 1, cols.min(), cols.max() + 1
+    return canvas[r0:r1, c0:c1], c0 - P, P - r0
+
+
 def _cov_of(labels, k, SS):
     return coverage(labels == k, SS)
 
@@ -559,6 +618,87 @@ def snap_layout(font, ywarp_units):
             _walk(font[tag].table, fn, set())
 
 
+def _cells(gb):
+    if gb is None or gb.bits is None or not gb.bits.any():
+        return None
+    ys, xs = np.nonzero(gb.bits)
+    return xs + gb.x0, gb.ytop - 1 - ys  # columna, fila (fila 0 = sobre línea base)
+
+
+def separate_marks(font, bitmaps, important=frozenset(), max_steps=3):
+    """Revisa cada par base+marca de GPOS (MarkBase, MarkLig, MarkMark). Si la
+    marca toca la base en píxeles, aleja el anclaje de la base de a 1 px. Como
+    un anclaje lo comparten todas las marcas de su clase, se elige el
+    desplazamiento que deja separadas las marcas que importan (los puntos que
+    forman letras, en `important`) moviendo lo menos posible."""
+    if "GPOS" not in font:
+        return 0
+    moved = 0
+    cell_cache = {}
+
+    def cells(n):
+        if n not in cell_cache:
+            cell_cache[n] = _cells(bitmaps.get(n))
+        return cell_cache[n]
+
+    def touching(occ, anchor, marks, shift):
+        out = []
+        for m, manchor in marks:
+            mc = cells(m)
+            if mc is None:
+                continue
+            ox = (anchor.XCoordinate - manchor.XCoordinate) // PX
+            oy = (anchor.YCoordinate - manchor.YCoordinate) // PX + shift
+            if any((x, y) in occ for x, y in zip(mc[0] + ox, mc[1] + oy)):
+                out.append((m, (mc[1] + oy).mean()))
+        return out
+
+    def fix(base, anchor, marks):
+        nonlocal moved
+        bc = cells(base)
+        if bc is None or anchor is None or not marks:
+            return
+        occ = {(x + dx, y + dy) for x, y in zip(*bc) for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+        t0 = touching(occ, anchor, marks, 0)
+        if not t0:
+            return
+        t0.sort(key=lambda t: t[0] not in important)
+        direction = 1 if t0[0][1] >= bc[1].mean() else -1
+        def cost(k):
+            t = touching(occ, anchor, marks, k * direction)
+            return sum(10 if m in important else 1 for m, _ in t) + 0.6 * k
+        best = min(range(max_steps + 1), key=cost)
+        if best:
+            anchor.YCoordinate += best * direction * PX
+            moved += 1
+
+    for lk in font["GPOS"].table.LookupList.Lookup:
+        for st in lk.SubTable:
+            st = getattr(st, "ExtSubTable", st)
+            t = getattr(st, "LookupType", lk.LookupType)
+            if t not in (4, 5, 6):
+                continue
+            mcov = st.MarkCoverage.glyphs if t != 6 else st.Mark1Coverage.glyphs
+            marr = st.MarkArray.MarkRecord if t != 6 else st.Mark1Array.MarkRecord
+            by_class = {}
+            for g, rec in zip(mcov, marr):
+                by_class.setdefault(rec.Class, []).append((g, rec.MarkAnchor))
+            if t == 4:
+                for g, rec in zip(st.BaseCoverage.glyphs, st.BaseArray.BaseRecord):
+                    for c, a in enumerate(rec.BaseAnchor):
+                        fix(g, a, by_class.get(c, []))
+            elif t == 6:
+                for g, rec in zip(st.Mark2Coverage.glyphs, st.Mark2Array.Mark2Record):
+                    for c, a in enumerate(rec.Mark2Anchor):
+                        fix(g, a, by_class.get(c, []))
+            else:
+                for g, att in zip(st.LigatureCoverage.glyphs, st.LigatureArray.LigatureAttach):
+                    for comp in att.ComponentRecord:
+                        for c, a in enumerate(comp.LigatureAnchor):
+                            fix(g, a, by_class.get(c, []))
+    return moved
+
+
 # ---------------------------------------------------------------- conversión
 @dataclass
 class PixelResult:
@@ -642,16 +782,53 @@ def pixelize(src: TTFont, outlines, size: int, zones=None, glyph_names=None,
         b |= sk
         b = thin_added(b, sk, cov)
         b, issues = repair(b, cov, mask, SS)
+        if any(i.startswith("piezas") for i in issues):
+            nb, dx, dy = relayout_small(b, cov, mask, SS, threshold)
+            if nb is not b:
+                b, x0, ytop = nb, x0 + dx, ytop + dy
+                cov = np.zeros(b.shape, np.float32)  # la caja cambió
+                lab_, comps_, _, _ = topo_ref(mask, SS)
+                issues = [i for i in issues if not i.startswith("piezas")]
+                if pixel_topology(b)[0] != len(comps_):
+                    issues.append(f"piezas {pixel_topology(b)[0]}/{len(comps_)}")
         hh = hash((x0, ytop, mask.shape, np.packbits(mask).tobytes()))
         bitmaps[n] = GlyphBitmap(b, x0, ytop, hh, not issues, issues, cov.astype(np.float32))
 
     disambiguate(bitmaps, [n for n in order if bitmaps[n].bits is not None])
 
-    font = build_font(src, bitmaps, size, warp, family)
+    if not hasattr(src, "_letter_marks"):
+        src._letter_marks = letter_marks(src)
+    bounds = {}
+    for n in order:
+        cs = outlines.get(n)
+        if cs:
+            pts = np.concatenate(cs)
+            bounds[n] = (pts[:, 0].min(), pts[:, 0].max())
+    font = build_font(src, bitmaps, size, warp, family, src._letter_marks, bounds)
     return PixelResult(size, font, bitmaps, threshold, [float(z * s) for z in warp.dst])
 
 
-def build_font(src: TTFont, bitmaps, size, warp, family=None):
+def letter_marks(src: TTFont):
+    """Marcas que aparecen al dar forma a cada carácter solo y en contexto
+    (p. ej. los puntos que forman las letras árabes)."""
+    from .render import font_bytes, shape
+    data = font_bytes(src)
+    order = src.getGlyphOrder()
+    gdef = src["GDEF"].table if "GDEF" in src else None
+    classes = gdef.GlyphClassDef.classDefs if gdef and gdef.GlyphClassDef else {}
+    out = set()
+    for cp in src.getBestCmap():
+        c = chr(cp)
+        for t in (c, "\u0640" + c, c + "\u0640", "\u0640" + c + "\u0640"):
+            infos, _, _ = shape(data, t)
+            for i in infos:
+                n = order[i.codepoint]
+                if classes.get(n) == 3:
+                    out.add(n)
+    return frozenset(out)
+
+
+def build_font(src: TTFont, bitmaps, size, warp, family=None, important=frozenset(), bounds=None):
     import copy, io
     buf = io.BytesIO()
     src.save(buf)
@@ -695,14 +872,26 @@ def build_font(src: TTFont, bitmaps, size, warp, family=None):
     for n in order:
         glyf.glyphs[n] = bitmap_to_glyph(bitmaps[n])
     hmtx = f["hmtx"].metrics
+    s_px = size / old_upem
     for n in order:
         adv, _ = hmtx[n]
         g = glyf.glyphs[n]
         g.recalcBounds(glyf)
         lsb = getattr(g, "xMin", 0) if getattr(g, "numberOfContours", 0) else 0
-        hmtx[n] = (int(round(adv / PX)) * PX, lsb)
+        adv_px = int(round(adv / PX))
+        gb = bitmaps[n]
+        # espacio entre letras: si el original deja aire a la derecha, la
+        # versión pixel deja al menos 1 px (no aplica a lados que se unen,
+        # como en árabe, donde el original no deja aire)
+        if bounds and n in bounds and adv_px > 0 and gb.bits is not None and gb.bits.any():
+            rsb_orig = (adv / k - bounds[n][1]) * s_px
+            right = gb.x0 + gb.bits.shape[1]
+            if rsb_orig > 0.05 and adv_px - right < 1:
+                adv_px = right + 1
+        hmtx[n] = (adv_px * PX, lsb)
 
     snap_layout(f, ywarp_units)
+    f.marks_moved = separate_marks(f, bitmaps, important)
 
     def up(v):
         return int(math.ceil(v / PX)) * PX

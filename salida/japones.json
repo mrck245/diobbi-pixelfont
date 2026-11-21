@@ -2,16 +2,17 @@
  "id": "japones",
  "name": "Japonés · Noto Sans CJK JP",
  "font": "NotoSansCJK-Regular.ttc",
- "min_size": 13,
+ "min_size": 12,
  "results": [
   {
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2601,
+   "topo_fail": 2429,
    "topo_total": 3354,
-   "ocr": 0.765,
+   "ocr": 0.691,
    "ocr_base": 1.0,
+   "pieces": "81/78",
    "ok": false,
    "threshold": 0.484
   },
@@ -19,10 +20,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2526,
+   "topo_fail": 2377,
    "topo_total": 3354,
-   "ocr": 0.694,
+   "ocr": 0.787,
    "ocr_base": 1.0,
+   "pieces": "73/78",
    "ok": false,
    "threshold": 0.492
   },
@@ -30,10 +32,11 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2504,
+   "topo_fail": 2347,
    "topo_total": 3354,
-   "ocr": 0.78,
+   "ocr": 0.739,
    "ocr_base": 1.0,
+   "pieces": "76/78",
    "ok": false,
    "threshold": 0.5
   },
@@ -41,10 +44,11 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2433,
+   "topo_fail": 2275,
    "topo_total": 3354,
-   "ocr": 0.88,
+   "ocr": 0.917,
    "ocr_base": 1.0,
+   "pieces": "74/78",
    "ok": false,
    "threshold": 0.5
   },
@@ -52,38 +56,29 @@
    "size": 12,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2314,
+   "topo_fail": 2169,
    "topo_total": 3354,
-   "ocr": 0.876,
+   "ocr": 0.91,
    "ocr_base": 1.0,
-   "ok": false,
+   "pieces": "75/78",
+   "ok": true,
    "threshold": 0.5
   },
   {
    "size": 13,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 2201,
-   "topo_total": 3354,
-   "ocr": 0.921,
-   "ocr_base": 1.0,
-   "ok": true,
-   "threshold": 0.5
-  },
-  {
-   "size": 14,
-   "collisions": 0,
-   "collision_examples": [],
-   "topo_fail": 2156,
+   "topo_fail": 2080,
    "topo_total": 3354,
    "ocr": 0.951,
    "ocr_base": 1.0,
+   "pieces": "75/78",
    "ok": true,
    "threshold": 0.5
   }
  ],
  "files": {
-  "13": "salida/japones-13px.ttf"
+  "12": "salida/japones-12px.ttf"
  },
  "zones": [
   -80.0,
@@ -92,5 +87,5 @@
   733.0,
   840.0
  ],
- "seconds": 411
+ "seconds": 359
 }

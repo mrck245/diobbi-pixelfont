@@ -14,16 +14,16 @@ batería de pruebas.
 
 ## Resultados del prototipo (5 idiomas, 8 fuentes)
 
-| Idioma · fuente | Mínimo (px/em) | Altura de línea | Tinta mediana por glifo | OCR pixel / original |
-|---|---|---|---|---|
-| Rumano · Noto Sans | **10** | 14 px | 7 px | 0.92 / 0.97 |
-| Rumano · Crimson Text (serif) | **12** | 17 px | 8 px | 0.90 / 0.93 |
-| Rumano · Anton (condensada gruesa) | **12** | 19 px | 11 px | 0.88 / 0.94 |
-| Japonés · Noto Sans CJK JP | **13** | 20 px | 12 px | 0.92 / 1.00 |
-| Tamil · Noto Sans Tamil | **9** | 12 px | 6 px | 0.89 / 0.93 |
-| Urdu · Noto Naskh Arabic | **11** | 19 px | 7 px | 0.97 / 1.00 |
-| Urdu · Noto Nastaliq Urdu | **20** | 51 px | 13 px | 0.81 / 0.83 |
-| Dzongkha · Jomolhari | **12** | 20 px | 7 px | 0.99 / 1.00 |
+| Idioma · fuente | Mínimo (px/em) | Altura de línea | Tinta mediana por glifo | OCR pixel / original | Piezas en texto |
+|---|---|---|---|---|---|
+| Rumano · Noto Sans | **10** | 14 px | 7 px | 0.91 / 0.97 | 125/125 |
+| Rumano · Crimson Text (serif) | **11** | 15 px | 7 px | 0.86 / 0.93 | 125/125 |
+| Rumano · Anton (condensada gruesa) | **14** | 22 px | 13 px | 0.91 / 0.94 | 120/125 |
+| Japonés · Noto Sans CJK JP | **12** | 18 px | 11 px | 0.91 / 1.00 | 75/78 |
+| Tamil · Noto Sans Tamil | **9** | 12 px | 6 px | 0.89 / 0.93 | 81/79 |
+| Urdu · Noto Naskh Arabic | **11** | 19 px | 7 px | 1.00 / 1.00 | 68/69 |
+| Urdu · Noto Nastaliq Urdu | **18** | 46 px | 12 px | 0.81 / 0.83 | 59/61 |
+| Dzongkha · Jomolhari | **18** | 29 px | 10 px | 1.00 / 1.00 | 45/45 |
 
 "px/em" es el tamaño nominal de la fuente. Cada diseño ocupa el em de forma distinta: en Jomolhari
 las letras son pequeñas dentro del em y en Nastaliq la línea es muy alta por la caída diagonal. Las
@@ -47,9 +47,16 @@ cada tamaño probado en `salida/*.json`.
 6. **Reparación topológica** contra la versión en alta resolución: recupera piezas perdidas
    (puntos, diacríticos), reconecta trazos partidos por el camino de mayor cobertura, reabre
    contraformas tapadas, separa piezas fusionadas, endereza bultos y elimina píxeles huérfanos.
-7. **Desambiguación**: si dos glifos distintos quedan idénticos, cambia el píxel donde más difieren
+7. **Puntos y diacríticos**: las piezas pequeñas que quedaron pegadas dentro de un glifo (los
+   tres puntos de ث/پ/ش, la diéresis, etc.) se recolocan con al menos 1 px de separación. Después
+   se revisa cada par base + marca de GPOS (MarkBase, MarkLig, MarkMark) y, si la marca toca la
+   base, se aleja su anclaje. Se da prioridad a las marcas que forman letras, como los puntos del
+   árabe en Noto Naskh, que son glifos aparte colocados por anclajes.
+8. **Espaciado**: si en el original una letra deja aire a su derecha, la versión pixel deja al
+   menos 1 px. En los lados que se unen, como en el árabe, no se agrega.
+9. **Desambiguación**: si dos glifos distintos quedan idénticos, cambia el píxel donde más difieren
    los originales.
-8. **Reconstrucción**: `upem = N × 64` (1 px = 64 unidades). Los glifos se escriben como
+10. **Reconstrucción**: `upem = N × 64` (1 px = 64 unidades). Los glifos se escriben como
    rectángulos y GPOS/GDEF, avances y métricas se redondean a la rejilla. Las tablas de hinting se
    eliminan.
 
@@ -62,7 +69,11 @@ cada tamaño probado en `salida/*.json`.
 - **OCR real**: se renderiza texto con HarfBuzz + FreeType usando la fuente pixelada, se lee con
   Tesseract y se compara con el OCR de la fuente original. Las líneas que el OCR no lee ni en el
   original se excluyen automáticamente.
-- **Tamaño mínimo** = el primer tamaño que pasa (unicidad y OCR ≥ 90 % del original) y cuyo
+- **Piezas en texto**: cuenta las piezas separadas (letras, puntos, acentos) de las líneas de
+  prueba renderizadas y las compara con el original. Detecta puntos pegados al cuerpo o letras
+  pegadas entre sí, cosas que el OCR suele pasar por alto porque adivina por contexto. Se exige
+  ≥ 95 %.
+- **Tamaño mínimo** = el primer tamaño que pasa (unicidad, OCR ≥ 90 % del original y piezas) y cuyo
   siguiente también pasa. Esto evita aciertos aislados.
 
 ## Uso
@@ -88,6 +99,10 @@ Agregar una escritura nueva consiste en añadir sus rangos Unicode. El resto del
   marcas curvas y una forma de coma para la coma inferior. Además, la prueba de unicidad debería
   exigir una distancia de al menos 2 píxeles entre letras acentuadas, no solo que no sean
   idénticas.
+- **Árabe/urdu**: los puntos ya se separan, pero todavía quedan casos de letras vecinas que se
+  tocan en la unión y alguna marca, como la madda de «آ», queda más alta de lo ideal.
+- **Dzongkha**: con la prueba de piezas el mínimo subió de 12 a 18 px. Algunos signos vocálicos
+  tocan letras vecinas a tamaños menores, y conviene aplicar la misma separación de marcas.
 - **Topología en CJK**: en kanji densos muchas contraformas pequeñas se fusionan. El OCR sigue
   leyendo bien a 13 px, pero hay margen con simplificación de trazos.
 - **Nastaliq**: funciona y conserva la caída diagonal, pero necesita tamaños grandes. Naskh es la

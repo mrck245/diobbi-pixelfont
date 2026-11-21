@@ -77,3 +77,25 @@ def ocr_score(font_data, lines, lang, px, mono, target_em=48):
             img = upscale(img, f).filter(ImageFilter.GaussianBlur(f * 0.35))
         scores.append(similarity(ocr(img, lang), line))
     return float(np.mean(scores))
+
+
+def line_pieces(font_data, line, px, mono, ref_px=None):
+    """Cuenta las piezas separadas (componentes conexos) de una línea
+    renderizada. En una fuente pixel, puntos o acentos pegados al cuerpo
+    reducen el número de piezas frente al original."""
+    from scipy import ndimage
+    img = np.array(render_line(font_data, line, px, mono)) < 128
+    lab, n = ndimage.label(img, structure=np.ones((3, 3), bool))
+    if n == 0:
+        return 0
+    if ref_px:  # original grande: ignorar motas menores que ~0.3 px del tamaño destino
+        areas = ndimage.sum(img, lab, index=np.arange(1, n + 1))
+        min_area = 0.3 * (px / ref_px) ** 2
+        return int((areas >= min_area).sum())
+    return n
+
+
+def pieces_ratio(pixel_data, src_data, lines, size, ref_px=64):
+    got = sum(line_pieces(pixel_data, ln, size, True) for ln in lines)
+    ref = sum(line_pieces(src_data, ln, ref_px, False, ref_px=size) for ln in lines)
+    return got / ref if ref else 1.0, got, ref

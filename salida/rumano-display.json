@@ -2,16 +2,17 @@
  "id": "rumano-display",
  "name": "Rumano · Anton (condensada gruesa)",
  "font": "Anton-Regular.ttf",
- "min_size": 12,
+ "min_size": 14,
  "results": [
   {
    "size": 6,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 133,
+   "topo_fail": 37,
    "topo_total": 341,
-   "ocr": 0.349,
+   "ocr": 0.556,
    "ocr_base": 0.936,
+   "pieces": "115/125",
    "ok": false,
    "threshold": 0.547
   },
@@ -19,10 +20,11 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 148,
+   "topo_fail": 85,
    "topo_total": 341,
-   "ocr": 0.46,
+   "ocr": 0.764,
    "ocr_base": 0.936,
+   "pieces": "109/125",
    "ok": false,
    "threshold": 0.5
   },
@@ -30,10 +32,11 @@
    "size": 8,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 134,
+   "topo_fail": 65,
    "topo_total": 341,
-   "ocr": 0.535,
+   "ocr": 0.69,
    "ocr_base": 0.936,
+   "pieces": "120/125",
    "ok": false,
    "threshold": 0.609
   },
@@ -41,10 +44,11 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 145,
+   "topo_fail": 88,
    "topo_total": 341,
-   "ocr": 0.52,
+   "ocr": 0.753,
    "ocr_base": 0.936,
+   "pieces": "110/125",
    "ok": false,
    "threshold": 0.563
   },
@@ -52,21 +56,23 @@
    "size": 10,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 123,
+   "topo_fail": 92,
    "topo_total": 341,
-   "ocr": 0.819,
+   "ocr": 0.87,
    "ocr_base": 0.936,
-   "ok": false,
+   "pieces": "120/125",
+   "ok": true,
    "threshold": 0.555
   },
   {
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 91,
+   "topo_fail": 72,
    "topo_total": 341,
-   "ocr": 0.824,
+   "ocr": 0.847,
    "ocr_base": 0.936,
+   "pieces": "104/125",
    "ok": false,
    "threshold": 0.539
   },
@@ -74,27 +80,53 @@
    "size": 12,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 100,
+   "topo_fail": 95,
    "topo_total": 341,
-   "ocr": 0.881,
+   "ocr": 0.901,
    "ocr_base": 0.936,
-   "ok": true,
+   "pieces": "105/125",
+   "ok": false,
    "threshold": 0.531
   },
   {
    "size": 13,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 95,
+   "topo_fail": 92,
    "topo_total": 341,
-   "ocr": 0.937,
+   "ocr": 0.904,
    "ocr_base": 0.936,
-   "ok": true,
+   "pieces": "100/125",
+   "ok": false,
    "threshold": 0.563
+  },
+  {
+   "size": 14,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 51,
+   "topo_total": 341,
+   "ocr": 0.913,
+   "ocr_base": 0.936,
+   "pieces": "120/125",
+   "ok": true,
+   "threshold": 0.5
+  },
+  {
+   "size": 15,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 40,
+   "topo_total": 341,
+   "ocr": 0.934,
+   "ocr_base": 0.936,
+   "pieces": "121/125",
+   "ok": true,
+   "threshold": 0.5
   }
  ],
  "files": {
-  "12": "salida/rumano-display-12px.ttf"
+  "14": "salida/rumano-display-14px.ttf"
  },
  "zones": [
   0.0,
@@ -102,5 +134,5 @@
   1760.0,
   2252.8
  ],
- "seconds": 16
+ "seconds": 23
 }
