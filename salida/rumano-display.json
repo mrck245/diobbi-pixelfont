@@ -1,0 +1,106 @@
+{
+ "id": "rumano-display",
+ "name": "Rumano · Anton (condensada gruesa)",
+ "font": "Anton-Regular.ttf",
+ "min_size": 12,
+ "results": [
+  {
+   "size": 6,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 133,
+   "topo_total": 341,
+   "ocr": 0.349,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.547
+  },
+  {
+   "size": 7,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 148,
+   "topo_total": 341,
+   "ocr": 0.46,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.5
+  },
+  {
+   "size": 8,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 134,
+   "topo_total": 341,
+   "ocr": 0.535,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.609
+  },
+  {
+   "size": 9,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 145,
+   "topo_total": 341,
+   "ocr": 0.52,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.563
+  },
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 123,
+   "topo_total": 341,
+   "ocr": 0.819,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.555
+  },
+  {
+   "size": 11,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 91,
+   "topo_total": 341,
+   "ocr": 0.824,
+   "ocr_base": 0.936,
+   "ok": false,
+   "threshold": 0.539
+  },
+  {
+   "size": 12,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 100,
+   "topo_total": 341,
+   "ocr": 0.881,
+   "ocr_base": 0.936,
+   "ok": true,
+   "threshold": 0.531
+  },
+  {
+   "size": 13,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 95,
+   "topo_total": 341,
+   "ocr": 0.937,
+   "ocr_base": 0.936,
+   "ok": true,
+   "threshold": 0.563
+  }
+ ],
+ "files": {
+  "12": "salida/rumano-display-12px.ttf"
+ },
+ "zones": [
+  0.0,
+  1500.0,
+  1760.0,
+  2252.8
+ ],
+ "seconds": 16
+}

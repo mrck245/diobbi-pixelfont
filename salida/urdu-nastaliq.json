@@ -1,0 +1,95 @@
+{
+ "id": "urdu-nastaliq",
+ "name": "Urdu · Noto Nastaliq Urdu",
+ "font": "NotoNastaliqUrdu-VF.ttf",
+ "min_size": 20,
+ "results": [
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 42,
+   "topo_total": 330,
+   "ocr": 0.386,
+   "ocr_base": 0.829,
+   "ok": false,
+   "threshold": 0.449
+  },
+  {
+   "size": 12,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 35,
+   "topo_total": 330,
+   "ocr": 0.662,
+   "ocr_base": 0.829,
+   "ok": false,
+   "threshold": 0.457
+  },
+  {
+   "size": 14,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 41,
+   "topo_total": 330,
+   "ocr": 0.607,
+   "ocr_base": 0.829,
+   "ok": false,
+   "threshold": 0.48
+  },
+  {
+   "size": 16,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 31,
+   "topo_total": 330,
+   "ocr": 0.781,
+   "ocr_base": 0.829,
+   "ok": true,
+   "threshold": 0.488
+  },
+  {
+   "size": 18,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 28,
+   "topo_total": 330,
+   "ocr": 0.729,
+   "ocr_base": 0.829,
+   "ok": false,
+   "threshold": 0.495
+  },
+  {
+   "size": 20,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 31,
+   "topo_total": 330,
+   "ocr": 0.805,
+   "ocr_base": 0.829,
+   "ok": true,
+   "threshold": 0.493
+  },
+  {
+   "size": 22,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 29,
+   "topo_total": 330,
+   "ocr": 0.781,
+   "ocr_base": 0.829,
+   "ok": true,
+   "threshold": 0.479
+  }
+ ],
+ "files": {
+  "20": "salida/urdu-nastaliq-20px.ttf"
+ },
+ "zones": [
+  0.0,
+  536.0,
+  670.0,
+  714.0
+ ],
+ "seconds": 97
+}

@@ -1,0 +1,20 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: noto-cjk
+Upstream-Contact: https://github.com/notofonts/noto-cjk/issues
+Source: https://github.com/notofonts/noto-cjk
+Files-Excluded:
+ .gitattributes
+ .gitignore
+ Sans/Mono/NotoSansMonoCJKhk-Bold.otf
+ Sans/Mono/NotoSansMonoCJKhk-Regular.otf
+ Sans/Mono/NotoSansMonoCJKjp-Bold.otf
+ Sans/Mono/NotoSansMonoCJKjp-Regular.otf
+ Sans/Mono/NotoSansMonoCJKkr-Bold.otf
+ Sans/Mono/NotoSansMonoCJKkr-Regular.otf
+ Sans/Mono/NotoSansMonoCJKsc-Bold.otf
+ Sans/Mono/NotoSansMonoCJKsc-Regular.otf
+ Sans/Mono/NotoSansMonoCJKtc-Bold.otf
+ Sans/Mono/NotoSansMonoCJKtc-Regular.otf
+ Sans/OTF/Japanese/NotoSansCJKjp-Black.otf
+ Sans/OTF/Japanese/NotoSansCJKjp-Bold.otf
+ Sans/OTF/Japanese/NotoSansCJKjp-DemiLight.otf

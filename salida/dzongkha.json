@@ -1,0 +1,83 @@
+{
+ "id": "dzongkha",
+ "name": "Dzongkha · Jomolhari",
+ "font": "Jomolhari-Regular.ttf",
+ "min_size": 12,
+ "results": [
+  {
+   "size": 8,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 99,
+   "topo_total": 242,
+   "ocr": 0.159,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.441
+  },
+  {
+   "size": 9,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 111,
+   "topo_total": 242,
+   "ocr": 0.507,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.441
+  },
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 111,
+   "topo_total": 242,
+   "ocr": 0.629,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.457
+  },
+  {
+   "size": 11,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 115,
+   "topo_total": 242,
+   "ocr": 0.824,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.461
+  },
+  {
+   "size": 12,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 101,
+   "topo_total": 242,
+   "ocr": 0.986,
+   "ocr_base": 1.0,
+   "ok": true,
+   "threshold": 0.461
+  },
+  {
+   "size": 13,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 94,
+   "topo_total": 242,
+   "ocr": 0.972,
+   "ocr_base": 1.0,
+   "ok": true,
+   "threshold": 0.469
+  }
+ ],
+ "files": {
+  "12": "salida/dzongkha-12px.ttf"
+ },
+ "zones": [
+  0.0,
+  358.40000000000003,
+  756.0
+ ],
+ "seconds": 133
+}

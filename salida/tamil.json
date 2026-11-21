@@ -1,0 +1,62 @@
+{
+ "id": "tamil",
+ "name": "Tamil · Noto Sans Tamil",
+ "font": "NotoSansTamil-VF.ttf",
+ "min_size": 9,
+ "results": [
+  {
+   "size": 7,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 58,
+   "topo_total": 120,
+   "ocr": 0.785,
+   "ocr_base": 0.929,
+   "ok": false,
+   "threshold": 0.488
+  },
+  {
+   "size": 8,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 55,
+   "topo_total": 120,
+   "ocr": 0.706,
+   "ocr_base": 0.929,
+   "ok": false,
+   "threshold": 0.488
+  },
+  {
+   "size": 9,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 47,
+   "topo_total": 120,
+   "ocr": 0.886,
+   "ocr_base": 0.929,
+   "ok": true,
+   "threshold": 0.504
+  },
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 31,
+   "topo_total": 120,
+   "ocr": 0.852,
+   "ocr_base": 0.929,
+   "ok": true,
+   "threshold": 0.5
+  }
+ ],
+ "files": {
+  "9": "salida/tamil-9px.ttf"
+ },
+ "zones": [
+  -320.0,
+  0.0,
+  550.0,
+  714.0
+ ],
+ "seconds": 10
+}

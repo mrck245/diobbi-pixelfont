@@ -1,0 +1,96 @@
+{
+ "id": "japones",
+ "name": "Japonés · Noto Sans CJK JP",
+ "font": "NotoSansCJK-Regular.ttc",
+ "min_size": 13,
+ "results": [
+  {
+   "size": 8,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2601,
+   "topo_total": 3354,
+   "ocr": 0.765,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.484
+  },
+  {
+   "size": 9,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2526,
+   "topo_total": 3354,
+   "ocr": 0.694,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.492
+  },
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2504,
+   "topo_total": 3354,
+   "ocr": 0.78,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.5
+  },
+  {
+   "size": 11,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2433,
+   "topo_total": 3354,
+   "ocr": 0.88,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.5
+  },
+  {
+   "size": 12,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2314,
+   "topo_total": 3354,
+   "ocr": 0.876,
+   "ocr_base": 1.0,
+   "ok": false,
+   "threshold": 0.5
+  },
+  {
+   "size": 13,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2201,
+   "topo_total": 3354,
+   "ocr": 0.921,
+   "ocr_base": 1.0,
+   "ok": true,
+   "threshold": 0.5
+  },
+  {
+   "size": 14,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 2156,
+   "topo_total": 3354,
+   "ocr": 0.951,
+   "ocr_base": 1.0,
+   "ok": true,
+   "threshold": 0.5
+  }
+ ],
+ "files": {
+  "13": "salida/japones-13px.ttf"
+ },
+ "zones": [
+  -80.0,
+  0.0,
+  543.0,
+  733.0,
+  840.0
+ ],
+ "seconds": 411
+}

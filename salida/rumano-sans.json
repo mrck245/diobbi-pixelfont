@@ -1,0 +1,100 @@
+{
+ "id": "rumano-sans",
+ "name": "Rumano · Noto Sans",
+ "font": "NotoSans-VF.ttf",
+ "min_size": 10,
+ "results": [
+  {
+   "size": 5,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 139,
+   "topo_total": 350,
+   "ocr": 0.177,
+   "ocr_base": 0.967,
+   "ok": false,
+   "threshold": 0.438
+  },
+  {
+   "size": 6,
+   "collisions": 1,
+   "collision_examples": [
+    [
+     "Oacute",
+     "Ocircumflex"
+    ]
+   ],
+   "topo_fail": 117,
+   "topo_total": 350,
+   "ocr": 0.415,
+   "ocr_base": 0.967,
+   "ok": false,
+   "threshold": 0.438
+  },
+  {
+   "size": 7,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 91,
+   "topo_total": 350,
+   "ocr": 0.645,
+   "ocr_base": 0.967,
+   "ok": false,
+   "threshold": 0.438
+  },
+  {
+   "size": 8,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 49,
+   "topo_total": 350,
+   "ocr": 0.683,
+   "ocr_base": 0.967,
+   "ok": false,
+   "threshold": 0.457
+  },
+  {
+   "size": 9,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 87,
+   "topo_total": 350,
+   "ocr": 0.755,
+   "ocr_base": 0.967,
+   "ok": false,
+   "threshold": 0.5
+  },
+  {
+   "size": 10,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 32,
+   "topo_total": 350,
+   "ocr": 0.923,
+   "ocr_base": 0.967,
+   "ok": true,
+   "threshold": 0.508
+  },
+  {
+   "size": 11,
+   "collisions": 0,
+   "collision_examples": [],
+   "topo_fail": 30,
+   "topo_total": 350,
+   "ocr": 0.936,
+   "ocr_base": 0.967,
+   "ok": true,
+   "threshold": 0.492
+  }
+ ],
+ "files": {
+  "10": "salida/rumano-sans-10px.ttf"
+ },
+ "zones": [
+  0.0,
+  536.0,
+  710.0,
+  940.0
+ ],
+ "seconds": 14
+}
