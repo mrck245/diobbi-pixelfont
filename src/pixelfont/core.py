@@ -420,6 +420,7 @@ def relayout_small(b, cov, mask, SS, threshold, max_small=3.0):
     else:
         body = np.zeros_like(b)
     canvas[P:P + h, P:P + w] = body
+    smalls = np.zeros_like(canvas)  # piezas pequeñas ya colocadas
     centre_y = (np.nonzero(body)[0].mean() if body.any() else h / 2)
     for k in sorted(small, key=lambda k: -areas[k]):
         piece = ccov[k] >= threshold
@@ -441,7 +442,8 @@ def relayout_small(b, cov, mask, SS, threshold, max_small=3.0):
                 Y, X = ys + P + dy, xs + P + dx
                 if Y.min() < 0 or X.min() < 0 or Y.max() >= canvas.shape[0] or X.max() >= canvas.shape[1]:
                     continue
-                near = ndimage.binary_dilation(canvas, structure=EIGHT)
+                near = ndimage.binary_dilation(canvas & ~smalls, structure=EIGHT)
+                near |= ndimage.binary_dilation(smalls, structure=FOUR)
                 if not near[Y, X].any():
                     best = (Y, X)
                     break
@@ -450,6 +452,7 @@ def relayout_small(b, cov, mask, SS, threshold, max_small=3.0):
         if best is None:
             best = (ys + P, xs + P)
         canvas[best] = True
+        smalls[best] = True
     rows, cols = np.nonzero(canvas)
     r0, r1, c0, c1 = rows.min(), rows.max() + 1, cols.min(), cols.max() + 1
     return canvas[r0:r1, c0:c1], c0 - P, P - r0
@@ -625,7 +628,10 @@ def _cells(gb):
     return xs + gb.x0, gb.ytop - 1 - ys  # columna, fila (fila 0 = sobre línea base)
 
 
-def separate_marks(font, bitmaps, important=frozenset(), max_steps=3):
+DEBUG = None
+
+
+def separate_marks(font, bitmaps, important=None, max_steps=4):
     """Revisa cada par base+marca de GPOS (MarkBase, MarkLig, MarkMark). Si la
     marca toca la base en píxeles, aleja el anclaje de la base de a 1 px. Como
     un anclaje lo comparten todas las marcas de su clase, se elige el
@@ -633,6 +639,7 @@ def separate_marks(font, bitmaps, important=frozenset(), max_steps=3):
     forman letras, en `important`) moviendo lo menos posible."""
     if "GPOS" not in font:
         return 0
+    important = important or {}
     moved = 0
     cell_cache = {}
 
@@ -641,36 +648,81 @@ def separate_marks(font, bitmaps, important=frozenset(), max_steps=3):
             cell_cache[n] = _cells(bitmaps.get(n))
         return cell_cache[n]
 
-    def touching(occ, anchor, marks, shift):
-        out = []
-        for m, manchor in marks:
-            mc = cells(m)
-            if mc is None:
-                continue
-            ox = (anchor.XCoordinate - manchor.XCoordinate) // PX
-            oy = (anchor.YCoordinate - manchor.YCoordinate) // PX + shift
-            if any((x, y) in occ for x, y in zip(mc[0] + ox, mc[1] + oy)):
-                out.append((m, (mc[1] + oy).mean()))
-        return out
+    def gap(bc, mc, ox, oy):
+        """Píxeles de aire entre marca y base (0 = se tocan, también en diagonal)."""
+        bx, by = bc
+        mx, my = mc[0] + ox, mc[1] + oy
+        d = np.maximum(np.abs(mx[:, None] - bx[None, :]), np.abs(my[:, None] - by[None, :]))
+        return int(d.min()) - 1
 
     def fix(base, anchor, marks):
         nonlocal moved
         bc = cells(base)
         if bc is None or anchor is None or not marks:
             return
-        occ = {(x + dx, y + dy) for x, y in zip(*bc) for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
-        t0 = touching(occ, anchor, marks, 0)
-        if not t0:
+        items = []
+        for m, manchor in marks:
+            mc = cells(m)
+            if mc is None:
+                continue
+            ox = (anchor.XCoordinate - manchor.XCoordinate) // PX
+            oy = (anchor.YCoordinate - manchor.YCoordinate) // PX
+            above = (mc[1] + oy).mean() >= bc[1].mean()
+            # peso: cuántas letras ponen esta marca sobre ESTA base; si ninguna,
+            # casi nada (solo importa no tocar)
+            items.append((important.get((base, m), 0), mc, ox, oy, above, m))
+        if not items:
             return
-        t0.sort(key=lambda t: t[0] not in important)
-        direction = 1 if t0[0][1] >= bc[1].mean() else -1
+
         def cost(k):
-            t = touching(occ, anchor, marks, k * direction)
-            return sum(10 if m in important else 1 for m, _ in t) + 0.6 * k
-        best = min(range(max_steps + 1), key=cost)
+            c = 0.15 * abs(k)
+            for w, mc, ox, oy, above, _ in items:
+                g = gap(bc, mc, ox, oy + k)
+                if g < 1:
+                    # pegada: grave si muchas letras ponen esta marca en esta
+                    # base; si no hay evidencia de uso, casi no pesa (así no se
+                    # mueve un anclaje por marcas que esa letra nunca lleva)
+                    c += 50 * w + 0.05
+                else:
+                    c += 2 * w * (g - 1)  # objetivo: exactamente 1 px de aire
+            return c
+
+        best = min(range(-max_steps, max_steps + 1), key=cost)
+        if DEBUG is not None and base in DEBUG:
+            for k in range(-max_steps, max_steps + 1):
+                print(base, k, round(cost(k), 2), [(it[5], gap(bc, it[1], it[2], it[3] + k)) for it in items if it[0] > 2 and gap(bc, it[1], it[2], it[3] + k) != 1][:8])
         if best:
-            anchor.YCoordinate += best * direction * PX
+            anchor.YCoordinate += best * PX
             moved += 1
+
+    def normalize(by_class):
+        """Iguala, dentro de cada clase, la distancia entre el anclaje de la
+        marca y su borde más cercano a la base, para que un solo anclaje en la
+        base deje el mismo aire a todas (punto simple, doble, triple...)."""
+        for marks in by_class.values():
+            info = []
+            for m, a in marks:
+                mc = cells(m)
+                if mc is None:
+                    continue
+                ay = a.YCoordinate // PX
+                info.append((m, a, mc[1].min() - ay, mc[1].max() - ay, mc[1].mean() - ay))
+            if len(info) < 2:
+                continue
+            above = sum(1 for i in info if i[4] >= 0) >= len(info) / 2
+            edge = [(i[2] if above else i[3]) for i in info]
+            w = [important.get(i[0], 0) + 0.01 for i in info]
+            order = np.argsort(edge)
+            cum, half, target = 0.0, sum(w) / 2, edge[order[0]]
+            for j in order:  # mediana ponderada por frecuencia
+                cum += w[j]
+                if cum >= half:
+                    target = edge[j]
+                    break
+            for (m, a, lo, hi, mean), e in zip(info, edge):
+                # solo corrige diferencias de redondeo (1 px), no rediseña
+                if (mean >= 0) == above and 0 < abs(e - target) <= 1:
+                    a.YCoordinate += int(e - target) * PX
 
     for lk in font["GPOS"].table.LookupList.Lookup:
         for st in lk.SubTable:
@@ -683,6 +735,7 @@ def separate_marks(font, bitmaps, important=frozenset(), max_steps=3):
             by_class = {}
             for g, rec in zip(mcov, marr):
                 by_class.setdefault(rec.Class, []).append((g, rec.MarkAnchor))
+            normalize(by_class)
             if t == 4:
                 for g, rec in zip(st.BaseCoverage.glyphs, st.BaseArray.BaseRecord):
                     for c, a in enumerate(rec.BaseAnchor):
@@ -809,26 +862,38 @@ def pixelize(src: TTFont, outlines, size: int, zones=None, glyph_names=None,
 
 
 def letter_marks(src: TTFont):
-    """Marcas que aparecen al dar forma a cada carácter solo y en contexto
-    (p. ej. los puntos que forman las letras árabes)."""
+    """Cuántas letras usan cada marca al darles forma (sola y en contexto).
+    Solo cuentan caracteres que son letras: así los puntos del árabe pesan
+    mucho y las vocales opcionales o puntos raros pesan poco."""
+    import unicodedata
+    from collections import Counter
     from .render import font_bytes, shape
     data = font_bytes(src)
     order = src.getGlyphOrder()
     gdef = src["GDEF"].table if "GDEF" in src else None
     classes = gdef.GlyphClassDef.classDefs if gdef and gdef.GlyphClassDef else {}
-    out = set()
+    out = Counter()
     for cp in src.getBestCmap():
         c = chr(cp)
+        if not unicodedata.category(c).startswith("L"):
+            continue
+        seen = set()
         for t in (c, "\u0640" + c, c + "\u0640", "\u0640" + c + "\u0640"):
             infos, _, _ = shape(data, t)
-            for i in infos:
-                n = order[i.codepoint]
-                if classes.get(n) == 3:
-                    out.add(n)
-    return frozenset(out)
+            names = [order[i.codepoint] for i in infos]
+            for i, n in zip(infos, names):
+                if classes.get(n) != 3:
+                    continue
+                # base = glifo no-marca del mismo cluster
+                bases = [b for j, b in zip(infos, names) if j.cluster == i.cluster and classes.get(b) != 3]
+                seen.add(n)
+                for b in bases:
+                    seen.add((b, n))
+        out.update(seen)
+    return dict(out)
 
 
-def build_font(src: TTFont, bitmaps, size, warp, family=None, important=frozenset(), bounds=None):
+def build_font(src: TTFont, bitmaps, size, warp, family=None, important=None, bounds=None):
     import copy, io
     buf = io.BytesIO()
     src.save(buf)

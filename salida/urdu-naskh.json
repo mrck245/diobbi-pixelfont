@@ -8,23 +8,28 @@
    "size": 7,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 500,
+   "topo_fail": 586,
    "topo_total": 1037,
-   "ocr": 0.793,
+   "ocr": 0.816,
    "ocr_base": 1.0,
-   "pieces": "68/67",
+   "pieces": "62/67",
    "ok": false,
    "threshold": 0.438
   },
   {
    "size": 8,
-   "collisions": 0,
-   "collision_examples": [],
-   "topo_fail": 258,
+   "collisions": 1,
+   "collision_examples": [
+    [
+     "uni0616",
+     "uni06E8"
+    ]
+   ],
+   "topo_fail": 421,
    "topo_total": 1037,
-   "ocr": 0.872,
+   "ocr": 0.752,
    "ocr_base": 1.0,
-   "pieces": "66/69",
+   "pieces": "60/69",
    "ok": false,
    "threshold": 0.449
   },
@@ -32,12 +37,12 @@
    "size": 9,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 253,
+   "topo_fail": 431,
    "topo_total": 1037,
-   "ocr": 0.976,
+   "ocr": 0.88,
    "ocr_base": 1.0,
-   "pieces": "68/69",
-   "ok": true,
+   "pieces": "61/69",
+   "ok": false,
    "threshold": 0.477
   },
   {
@@ -49,9 +54,9 @@
      "uni06EC"
     ]
    ],
-   "topo_fail": 176,
+   "topo_fail": 427,
    "topo_total": 1037,
-   "ocr": 0.912,
+   "ocr": 0.952,
    "ocr_base": 1.0,
    "pieces": "74/69",
    "ok": false,
@@ -61,9 +66,9 @@
    "size": 11,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 120,
+   "topo_fail": 282,
    "topo_total": 1037,
-   "ocr": 1.0,
+   "ocr": 0.984,
    "ocr_base": 1.0,
    "pieces": "68/69",
    "ok": true,
@@ -73,9 +78,9 @@
    "size": 12,
    "collisions": 0,
    "collision_examples": [],
-   "topo_fail": 122,
+   "topo_fail": 281,
    "topo_total": 1037,
-   "ocr": 1.0,
+   "ocr": 0.984,
    "ocr_base": 1.0,
    "pieces": "68/69",
    "ok": true,
@@ -91,5 +96,5 @@
   340.0,
   670.0
  ],
- "seconds": 81
+ "seconds": 82
 }

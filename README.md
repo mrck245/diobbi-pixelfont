@@ -16,13 +16,13 @@ batería de pruebas.
 
 | Idioma · fuente | Mínimo (px/em) | Altura de línea | Tinta mediana por glifo | OCR pixel / original | Piezas en texto |
 |---|---|---|---|---|---|
-| Rumano · Noto Sans | **10** | 14 px | 7 px | 0.91 / 0.97 | 125/125 |
-| Rumano · Crimson Text (serif) | **11** | 15 px | 7 px | 0.86 / 0.93 | 125/125 |
+| Rumano · Noto Sans | **10** | 14 px | 7 px | 0.91 / 0.97 | 126/125 |
+| Rumano · Crimson Text (serif) | **11** | 15 px | 7 px | 0.86 / 0.93 | 124/125 |
 | Rumano · Anton (condensada gruesa) | **14** | 22 px | 13 px | 0.91 / 0.94 | 120/125 |
-| Japonés · Noto Sans CJK JP | **12** | 18 px | 11 px | 0.91 / 1.00 | 75/78 |
+| Japonés · Noto Sans CJK JP | **14** | 22 px | 13 px | 1.00 / 1.00 | 75/78 |
 | Tamil · Noto Sans Tamil | **9** | 12 px | 6 px | 0.89 / 0.93 | 81/79 |
-| Urdu · Noto Naskh Arabic | **11** | 19 px | 7 px | 1.00 / 1.00 | 68/69 |
-| Urdu · Noto Nastaliq Urdu | **18** | 46 px | 12 px | 0.81 / 0.83 | 59/61 |
+| Urdu · Noto Naskh Arabic | **11** | 19 px | 7 px | 0.98 / 1.00 | 68/69 |
+| Urdu · Noto Nastaliq Urdu | **18** | 46 px | 12 px | 0.76 / 0.83 | 59/61 |
 | Dzongkha · Jomolhari | **18** | 29 px | 10 px | 1.00 / 1.00 | 45/45 |
 
 "px/em" es el tamaño nominal de la fuente. Cada diseño ocupa el em de forma distinta: en Jomolhari
@@ -47,11 +47,16 @@ cada tamaño probado en `salida/*.json`.
 6. **Reparación topológica** contra la versión en alta resolución: recupera piezas perdidas
    (puntos, diacríticos), reconecta trazos partidos por el camino de mayor cobertura, reabre
    contraformas tapadas, separa piezas fusionadas, endereza bultos y elimina píxeles huérfanos.
-7. **Puntos y diacríticos**: las piezas pequeñas que quedaron pegadas dentro de un glifo (los
-   tres puntos de ث/پ/ش, la diéresis, etc.) se recolocan con al menos 1 px de separación. Después
-   se revisa cada par base + marca de GPOS (MarkBase, MarkLig, MarkMark) y, si la marca toca la
-   base, se aleja su anclaje. Se da prioridad a las marcas que forman letras, como los puntos del
-   árabe en Noto Naskh, que son glifos aparte colocados por anclajes.
+7. **Puntos y diacríticos**: las piezas pequeñas que quedaron pegadas dentro de un glifo se
+   recolocan con al menos 1 px de separación del cuerpo. Los puntos de un mismo grupo pueden
+   tocarse en diagonal, como el triángulo `.#.` / `#.#` de ث/ش/پ, que es la forma habitual en
+   pixel art. En las marcas que GPOS coloca aparte (los puntos de Noto Naskh son glifos
+   independientes):
+   - se igualan los anclajes de cada grupo de marcas, corrigiendo solo diferencias de redondeo
+     de 1 px, para que el punto simple, el doble y el triple queden a la misma altura;
+   - para cada letra base se busca el desplazamiento que deja **exactamente 1 px de aire** entre
+     la letra y sus puntos, ni pegados ni flotando. Cada marca pesa según cuántas letras la ponen
+     sobre esa base, así las vocales opcionales o los puntos raros no desplazan a los comunes.
 8. **Espaciado**: si en el original una letra deja aire a su derecha, la versión pixel deja al
    menos 1 px. En los lados que se unen, como en el árabe, no se agrega.
 9. **Desambiguación**: si dos glifos distintos quedan idénticos, cambia el píxel donde más difieren
@@ -99,10 +104,12 @@ Agregar una escritura nueva consiste en añadir sus rangos Unicode. El resto del
   marcas curvas y una forma de coma para la coma inferior. Además, la prueba de unicidad debería
   exigir una distancia de al menos 2 píxeles entre letras acentuadas, no solo que no sean
   idénticas.
-- **Árabe/urdu**: los puntos ya se separan, pero todavía quedan casos de letras vecinas que se
-  tocan en la unión y alguna marca, como la madda de «آ», queda más alta de lo ideal.
-- **Dzongkha**: con la prueba de piezas el mínimo subió de 12 a 18 px. Algunos signos vocálicos
-  tocan letras vecinas a tamaños menores, y conviene aplicar la misma separación de marcas.
+- **Árabe/urdu**: los puntos quedan a 1 px de la letra (en el original, 0.7–1.4 px), pero
+  todavía hay letras vecinas que se tocan en algunas uniones. Las formas contextuales que solo
+  aparecen dentro de palabras, como la «ہ» antes de «ے» en Nastaliq, no reciben el ajuste de
+  marcas porque la prueba de uso solo da forma a letras sueltas.
+- **Dzongkha y japonés**: con la prueba de piezas más estricta, el mínimo es 18 px y 14 px. En
+  dzongkha algunos signos vocálicos tocan letras vecinas a tamaños menores.
 - **Topología en CJK**: en kanji densos muchas contraformas pequeñas se fusionan. El OCR sigue
   leyendo bien a 13 px, pero hay margen con simplificación de trazos.
 - **Nastaliq**: funciona y conserva la caída diagonal, pero necesita tamaños grandes. Naskh es la

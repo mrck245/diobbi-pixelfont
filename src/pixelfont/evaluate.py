@@ -88,6 +88,19 @@ def line_pieces(font_data, line, px, mono, ref_px=None):
     lab, n = ndimage.label(img, structure=np.ones((3, 3), bool))
     if n == 0:
         return 0
+    if mono:
+        # grupos de puntos que solo se tocan en diagonal (p. ej. el triángulo
+        # de ث) cuentan como puntos separados
+        extra = 0
+        for k in range(1, n + 1):
+            part = lab == k
+            sub, m = ndimage.label(part)
+            ys, xs = np.nonzero(part)
+            shape = (ys.max() - ys.min() + 1, xs.max() - xs.min() + 1)
+            # triángulo de 3 puntos de 1 px (.#. / #.#), forma estándar en pixel art
+            if m == 3 and part.sum() == 3 and shape in ((2, 3), (3, 2)):
+                extra += 2
+        return n + extra
     if ref_px:  # original grande: ignorar motas menores que ~0.3 px del tamaño destino
         areas = ndimage.sum(img, lab, index=np.arange(1, n + 1))
         min_area = 0.3 * (px / ref_px) ** 2
